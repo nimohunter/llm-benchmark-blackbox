@@ -13,6 +13,21 @@ import {
 import { getArchetype, pickArchetypeBySeed } from './archetypes';
 import { calculateScore } from './scoring';
 
+function normalizeRemediation(rem: any): Remediation {
+  if (!rem || typeof rem !== 'object') return rem;
+  if (rem.args && typeof rem.args === 'object') {
+    return {
+      type: rem.type,
+      target: rem.args.target || rem.target,
+      key: rem.args.key || rem.key,
+      value: rem.args.value !== undefined ? rem.args.value : rem.value,
+      action: rem.args.action || rem.action,
+      query: rem.args.query || rem.query,
+    };
+  }
+  return rem;
+}
+
 export class BlackBoxSimulator {
   public static createSession(
     modelName: string,
@@ -193,22 +208,34 @@ export class BlackBoxSimulator {
 
   public static dryrun(
     session: SessionData,
-    remediation: Remediation
+    remediation: Remediation | Remediation[]
   ): { turn: number; sandboxResult: unknown; budgetRemaining: number } {
     session.currentTurn += 1;
-    session.budgetRemaining = Math.max(0, session.budgetRemaining - 2);
+    session.budgetRemaining = Math.max(0, session.budgetRemaining - 1);
 
     // Deep clone state for sandbox
     const sandboxState: SystemState = JSON.parse(JSON.stringify(session.state));
     const archetype = getArchetype(session.archetypeId);
 
-    const validation = archetype.validateRemediation(sandboxState, remediation);
+    const remList: Remediation[] = (Array.isArray(remediation) ? remediation : [remediation]).map(normalizeRemediation);
+    let validation: any = { valid: false, message: 'No remediation provided.', resolves: false, blastRadius: false };
+
+    for (const rem of remList) {
+      const v = archetype.validateRemediation(sandboxState, rem);
+      if (v.resolves) {
+        sandboxState.activeIncident.resolved = true;
+        validation = v;
+      } else if (!validation.resolves) {
+        validation = v;
+      }
+      if (v.blastRadius) {
+        validation.blastRadius = true;
+      }
+    }
+
     session.state.activeIncident.stagingVerified = true;
 
     const prng = new PRNG(`${session.seed}-dryrun-${session.currentTurn}`);
-    if (validation.resolves) {
-      sandboxState.activeIncident.resolved = true;
-    }
     const turnSim = archetype.simulateTurn(sandboxState, prng, session.currentTurn);
 
     const sandboxResult = {
@@ -243,23 +270,31 @@ export class BlackBoxSimulator {
 
   public static apply(
     session: SessionData,
-    remediation: Remediation
+    remediation: Remediation | Remediation[]
   ): { turn: number; productionStatus: unknown; budgetRemaining: number } {
     session.currentTurn += 1;
     session.budgetRemaining = Math.max(0, session.budgetRemaining - 3);
 
     const archetype = getArchetype(session.archetypeId);
-    const validation = archetype.validateRemediation(session.state, remediation);
+    const remList: Remediation[] = (Array.isArray(remediation) ? remediation : [remediation]).map(normalizeRemediation);
+    let validation: any = { valid: false, message: 'No remediation provided.', resolves: false, blastRadius: false };
+
+    for (const rem of remList) {
+      const v = archetype.validateRemediation(session.state, rem);
+      if (v.resolves) {
+        session.state.activeIncident.resolved = true;
+        session.solved = true;
+        validation = v;
+      } else if (!validation.resolves) {
+        validation = v;
+      }
+      if (v.blastRadius) {
+        session.state.activeIncident.blastRadiusTriggered = true;
+        validation.blastRadius = true;
+      }
+    }
 
     const prng = new PRNG(`${session.seed}-apply-${session.currentTurn}`);
-    if (validation.resolves) {
-      session.state.activeIncident.resolved = true;
-      session.solved = true;
-    }
-    if (validation.blastRadius) {
-      session.state.activeIncident.blastRadiusTriggered = true;
-    }
-
     const turnSim = archetype.simulateTurn(session.state, prng, session.currentTurn);
     session.state.logs.push(...turnSim.logs);
 
