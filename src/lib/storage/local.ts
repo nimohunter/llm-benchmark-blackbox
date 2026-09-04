@@ -1,49 +1,97 @@
-import { SessionData } from '../engine/types';
+import { BatterySession, SessionData } from '../engine/types';
 import { IStorageAdapter, LeaderboardEntry } from './types';
+import { formatLeaderboardEntries } from './utils';
 import fs from 'fs';
 import path from 'path';
+import initialSessions from './seed/initial-sessions.json';
+import initialBatteries from './seed/initial-batteries.json';
 
 // Global memory cache surviving hot reloads
 const globalStore = globalThis as unknown as {
   __blackbox_sessions?: Map<string, SessionData>;
+  __blackbox_batteries?: Map<string, BatterySession>;
 };
 
 if (!globalStore.__blackbox_sessions) {
   globalStore.__blackbox_sessions = new Map<string, SessionData>();
 }
+if (!globalStore.__blackbox_batteries) {
+  globalStore.__blackbox_batteries = new Map<string, BatterySession>();
+}
 
 export class LocalStorageAdapter implements IStorageAdapter {
   private dataDir: string;
-  private filePath: string;
+  private sessionsFile: string;
+  private batteriesFile: string;
 
   constructor() {
     this.dataDir = path.join(process.cwd(), '.data');
-    this.filePath = path.join(this.dataDir, 'sessions.json');
+    this.sessionsFile = path.join(this.dataDir, 'sessions.json');
+    this.batteriesFile = path.join(this.dataDir, 'batteries.json');
     this.loadFromDisk();
   }
 
   private loadFromDisk() {
+    // 1. Load sessions
     try {
-      if (fs.existsSync(this.filePath)) {
-        const raw = fs.readFileSync(this.filePath, 'utf-8');
+      if (fs.existsSync(this.sessionsFile)) {
+        const raw = fs.readFileSync(this.sessionsFile, 'utf-8');
         const list: SessionData[] = JSON.parse(raw);
-        globalStore.__blackbox_sessions!.clear();
         for (const s of list) {
           globalStore.__blackbox_sessions!.set(s.sessionId, s);
         }
       }
     } catch {
-      // Ignore initial file read errors
+      // Disk read error
+    }
+
+    // Fallback if memory is empty
+    if (globalStore.__blackbox_sessions!.size === 0 && Array.isArray(initialSessions)) {
+      for (const s of initialSessions as SessionData[]) {
+        globalStore.__blackbox_sessions!.set(s.sessionId, s);
+      }
+    }
+
+    // 2. Load batteries
+    try {
+      if (fs.existsSync(this.batteriesFile)) {
+        const raw = fs.readFileSync(this.batteriesFile, 'utf-8');
+        const list: BatterySession[] = JSON.parse(raw);
+        for (const b of list) {
+          globalStore.__blackbox_batteries!.set(b.batteryId, b);
+        }
+      }
+    } catch {
+      // Disk read error
+    }
+
+    // Fallback if memory is empty
+    if (globalStore.__blackbox_batteries!.size === 0 && Array.isArray(initialBatteries)) {
+      for (const b of initialBatteries as BatterySession[]) {
+        globalStore.__blackbox_batteries!.set(b.batteryId, b);
+      }
     }
   }
 
-  private saveToDisk() {
+  private saveSessionsToDisk() {
     try {
       if (!fs.existsSync(this.dataDir)) {
         fs.mkdirSync(this.dataDir, { recursive: true });
       }
       const list = Array.from(globalStore.__blackbox_sessions!.values());
-      fs.writeFileSync(this.filePath, JSON.stringify(list, null, 2));
+      fs.writeFileSync(this.sessionsFile, JSON.stringify(list, null, 2));
+    } catch {
+      // Ignore disk write errors in read-only environments
+    }
+  }
+
+  private saveBatteriesToDisk() {
+    try {
+      if (!fs.existsSync(this.dataDir)) {
+        fs.mkdirSync(this.dataDir, { recursive: true });
+      }
+      const list = Array.from(globalStore.__blackbox_batteries!.values());
+      fs.writeFileSync(this.batteriesFile, JSON.stringify(list, null, 2));
     } catch {
       // Ignore disk write errors in read-only environments
     }
@@ -51,7 +99,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
 
   async saveSession(session: SessionData): Promise<void> {
     globalStore.__blackbox_sessions!.set(session.sessionId, session);
-    this.saveToDisk();
+    this.saveSessionsToDisk();
   }
 
   async getSession(sessionId: string): Promise<SessionData | null> {
@@ -59,57 +107,29 @@ export class LocalStorageAdapter implements IStorageAdapter {
     return globalStore.__blackbox_sessions!.get(sessionId) || null;
   }
 
+  async getAllSessions(): Promise<SessionData[]> {
+    this.loadFromDisk();
+    return Array.from(globalStore.__blackbox_sessions!.values());
+  }
+
+  async saveBattery(battery: BatterySession): Promise<void> {
+    globalStore.__blackbox_batteries!.set(battery.batteryId, battery);
+    this.saveBatteriesToDisk();
+  }
+
+  async getBattery(batteryId: string): Promise<BatterySession | null> {
+    this.loadFromDisk();
+    return globalStore.__blackbox_batteries!.get(batteryId) || null;
+  }
+
+  async getAllBatteries(): Promise<BatterySession[]> {
+    this.loadFromDisk();
+    return Array.from(globalStore.__blackbox_batteries!.values());
+  }
+
   async getLeaderboard(): Promise<LeaderboardEntry[]> {
     this.loadFromDisk();
     const sessions = Array.from(globalStore.__blackbox_sessions!.values());
-    const scored = sessions.filter((s) => s.finalScore !== undefined);
-
-    const entries: LeaderboardEntry[] = scored.map((s) => {
-      const isLadder = s.seed.startsWith('ladder-') || s.sessionId.startsWith('bat-') || s.modelName.includes('/8]');
-      let levelsCleared = 0;
-      if (s.seed === 'ladder-grandmaster-all8' || s.modelName.includes('8/8 CLEARED')) {
-        levelsCleared = 8;
-      } else if (s.seed.startsWith('ladder-knockout-L')) {
-        const match = s.seed.match(/L(\d+)/);
-        levelsCleared = match ? Math.max(0, parseInt(match[1]) - 1) : 0;
-      } else if (s.modelName.match(/\[L(\d+)\/8\]/)) {
-        const match = s.modelName.match(/\[L(\d+)\/8\]/);
-        levelsCleared = match ? parseInt(match[1]) : 1;
-      } else if (isLadder) {
-        levelsCleared = 1;
-      }
-
-      const archMeta: Record<string, { name: string; domain: string; badge: string }> = {
-        POISON_PILL_PANIC: { name: 'Poison Pill Panic', domain: 'Queue', badge: 'bg-purple-950/60 text-purple-300 border-purple-800/40' },
-        LOST_UPDATE_CONCURRENCY: { name: 'Lost Update Concurrency', domain: 'Storage', badge: 'bg-blue-950/60 text-blue-300 border-blue-800/40' },
-        TIMEOUT_POOL_STARVATION: { name: 'Timeout Starvation', domain: 'Network', badge: 'bg-amber-950/60 text-amber-300 border-amber-800/40' },
-        AUTH_TOKEN_ROTATION_DESYNC: { name: 'Token Rotation Desync', domain: 'Ops', badge: 'bg-emerald-950/60 text-emerald-300 border-emerald-800/40' },
-      };
-      const info = archMeta[s.archetypeId] || { name: 'Custom Drill', domain: 'Incident', badge: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
-
-      return {
-        sessionId: s.sessionId,
-        modelName: s.modelName,
-        seed: s.seed,
-        archetypeId: isLadder ? 'LADDER' : info.domain.toUpperCase(),
-        domain: info.domain,
-        scenarioName: info.name,
-        badgeColor: info.badge,
-        difficulty: s.difficulty,
-        totalScore: s.finalScore!.total,
-        recovery: s.finalScore!.recovery,
-        rcaAccuracy: s.finalScore!.rcaAccuracy,
-        safety: s.finalScore!.safety,
-        efficiency: s.finalScore!.efficiency,
-        solved: s.solved,
-        turnsUsed: s.currentTurn,
-        budgetRemaining: s.budgetRemaining,
-        finishedAt: s.finishedAt || s.createdAt,
-        isLadder,
-        levelsCleared,
-      };
-    });
-
-    return entries.sort((a, b) => b.totalScore - a.totalScore);
+    return formatLeaderboardEntries(sessions);
   }
 }

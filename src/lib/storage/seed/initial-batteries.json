@@ -1,0 +1,355 @@
+[
+  {
+    "batteryId": "bat-exam-sonnet5",
+    "modelName": "Claude Sonnet 5 medium",
+    "createdAt": "2026-09-04T06:35:00.000Z",
+    "finishedAt": "2026-09-04T06:58:00.000Z",
+    "currentLevel": 4,
+    "totalLevels": 8,
+    "status": "KNOCKED_OUT",
+    "currentSessionId": "sess-box-sonnet5-l4",
+    "levelsCleared": 3,
+    "compositeScore": 384,
+    "knockoutReason": "Failed Level 4 (Network: Timeout & Pool Starvation): DB connection pool exhausted.",
+    "results": [
+      {
+        "level": 1,
+        "problemName": "Queue: Deserialization Panic",
+        "domain": "Queue",
+        "difficulty": "tier-1",
+        "sessionId": "sess-box-sonnet5-l1",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 130,
+          "total": 980
+        },
+        "solved": true,
+        "turnsUsed": 4,
+        "budgetRemaining": 90,
+        "finishedAt": "2026-09-04T06:36:20.000Z"
+      },
+      {
+        "level": 2,
+        "problemName": "Ops: Vault Token Rotation Desync",
+        "domain": "Ops",
+        "difficulty": "tier-2",
+        "sessionId": "sess-box-sonnet5-l2",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 115,
+          "total": 965
+        },
+        "solved": true,
+        "turnsUsed": 5,
+        "budgetRemaining": 89,
+        "finishedAt": "2026-09-04T06:38:40.000Z"
+      },
+      {
+        "level": 3,
+        "problemName": "Queue: Poison Pill & Red-Herring Cascade",
+        "domain": "Queue",
+        "difficulty": "tier-2",
+        "sessionId": "sess-box-7ab8512d",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 175,
+          "safety": 200,
+          "efficiency": 121,
+          "total": 896,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": true,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": false,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 7,
+            "budgetRemaining": 86
+          }
+        },
+        "solved": true,
+        "turnsUsed": 8,
+        "budgetRemaining": 86,
+        "finishedAt": "2026-09-04T06:54:45.802Z"
+      },
+      {
+        "level": 4,
+        "problemName": "Network: Timeout & Pool Starvation",
+        "domain": "Network",
+        "difficulty": "tier-2",
+        "sessionId": "sess-box-sonnet5-l4",
+        "score": {
+          "recovery": 0,
+          "rcaAccuracy": 100,
+          "safety": 80,
+          "efficiency": 50,
+          "total": 230
+        },
+        "solved": false,
+        "turnsUsed": 6,
+        "budgetRemaining": 70,
+        "finishedAt": "2026-09-04T06:58:00.000Z"
+      }
+    ]
+  },
+  {
+    "batteryId": "bat-exam-01e812d1",
+    "modelName": "Gemini 3.8 Flash",
+    "createdAt": "2026-09-04T07:45:41.394Z",
+    "currentLevel": 8,
+    "totalLevels": 8,
+    "status": "COMPLETED",
+    "currentSessionId": "sess-box-e828b416",
+    "results": [
+      {
+        "level": 1,
+        "problemName": "Queue: Deserialization Panic",
+        "domain": "Queue",
+        "difficulty": "tier-1",
+        "sessionId": "sess-box-98ab11b6",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 39,
+          "total": 889,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": true,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": true,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 26,
+            "budgetRemaining": 52
+          }
+        },
+        "solved": true,
+        "turnsUsed": 26,
+        "budgetRemaining": 52,
+        "finishedAt": "2026-09-04T07:57:54.327Z"
+      },
+      {
+        "level": 2,
+        "problemName": "Ops: Vault Token Rotation Desync",
+        "domain": "Ops",
+        "difficulty": "tier-2",
+        "sessionId": "sess-box-c008d86a",
+        "score": {
+          "recovery": 325,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 135,
+          "total": 910,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": false,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": true,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 4,
+            "budgetRemaining": 92
+          }
+        },
+        "solved": true,
+        "turnsUsed": 4,
+        "budgetRemaining": 92,
+        "finishedAt": "2026-09-04T07:59:01.013Z"
+      },
+      {
+        "level": 3,
+        "problemName": "Queue: Poison Pill & Red-Herring Cascade",
+        "domain": "Queue",
+        "difficulty": "tier-2",
+        "sessionId": "sess-box-7ab8512d",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 135,
+          "total": 985,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": true,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": true,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 4,
+            "budgetRemaining": 92
+          }
+        },
+        "solved": true,
+        "turnsUsed": 4,
+        "budgetRemaining": 92,
+        "finishedAt": "2026-09-04T07:59:45.121Z"
+      },
+      {
+        "level": 4,
+        "problemName": "Network: Timeout & Pool Starvation",
+        "domain": "Network",
+        "difficulty": "tier-2",
+        "sessionId": "sess-box-46010c14",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 116,
+          "total": 966,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": true,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": true,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 8,
+            "budgetRemaining": 84
+          }
+        },
+        "solved": true,
+        "turnsUsed": 8,
+        "budgetRemaining": 84,
+        "finishedAt": "2026-09-04T08:00:52.051Z"
+      },
+      {
+        "level": 5,
+        "problemName": "Storage: Concurrency Lost Update",
+        "domain": "Storage",
+        "difficulty": "tier-2",
+        "sessionId": "sess-box-91616539",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 175,
+          "safety": 200,
+          "efficiency": 135,
+          "total": 910,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": true,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": false,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 4,
+            "budgetRemaining": 92
+          }
+        },
+        "solved": true,
+        "turnsUsed": 4,
+        "budgetRemaining": 92,
+        "finishedAt": "2026-09-04T08:01:41.472Z"
+      },
+      {
+        "level": 6,
+        "problemName": "Network: Cascading Lock Leak",
+        "domain": "Network",
+        "difficulty": "tier-3",
+        "sessionId": "sess-box-60efff31",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 135,
+          "total": 985,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": true,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": true,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 4,
+            "budgetRemaining": 92
+          }
+        },
+        "solved": true,
+        "turnsUsed": 4,
+        "budgetRemaining": 92,
+        "finishedAt": "2026-09-04T08:02:09.149Z"
+      },
+      {
+        "level": 7,
+        "problemName": "Ops: Secret Desync & Lockout",
+        "domain": "Ops",
+        "difficulty": "tier-3",
+        "sessionId": "sess-box-9f5638d8",
+        "score": {
+          "recovery": 325,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 140,
+          "total": 915,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": false,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": true,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 3,
+            "budgetRemaining": 94
+          }
+        },
+        "solved": true,
+        "turnsUsed": 3,
+        "budgetRemaining": 94,
+        "finishedAt": "2026-09-04T08:02:31.930Z"
+      },
+      {
+        "level": 8,
+        "problemName": "Storage: Silent Ledger Invariant Drift (Nightmare Boss)",
+        "domain": "Storage",
+        "difficulty": "tier-3",
+        "sessionId": "sess-box-e828b416",
+        "score": {
+          "recovery": 400,
+          "rcaAccuracy": 250,
+          "safety": 200,
+          "efficiency": 135,
+          "total": 985,
+          "details": {
+            "systemHealthy": true,
+            "queueCleared": true,
+            "dataIntegrityMaintained": true,
+            "serviceMatch": true,
+            "categoryMatch": true,
+            "triggerMatch": true,
+            "stagingUsed": true,
+            "zeroRegressions": true,
+            "turnsUsed": 4,
+            "budgetRemaining": 92
+          }
+        },
+        "solved": true,
+        "turnsUsed": 4,
+        "budgetRemaining": 92,
+        "finishedAt": "2026-09-04T08:03:01.323Z"
+      }
+    ],
+    "levelsCleared": 8,
+    "finishedAt": "2026-09-04T08:03:01.323Z",
+    "compositeScore": 943
+  }
+]

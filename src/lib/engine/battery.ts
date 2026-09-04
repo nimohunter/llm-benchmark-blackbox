@@ -88,54 +88,10 @@ export const LADDER_8_LEVELS: LadderLevelConfig[] = [
   },
 ];
 
-import fs from 'fs';
-import path from 'path';
-
-const DATA_DIR = path.join(process.cwd(), '.data');
-const BATTERIES_FILE = path.join(DATA_DIR, 'batteries.json');
-
-// In-memory battery store attached to globalThis
-const globalStore = globalThis as unknown as {
-  __blackbox_batteries?: Map<string, BatterySession>;
-};
-
-if (!globalStore.__blackbox_batteries) {
-  globalStore.__blackbox_batteries = new Map<string, BatterySession>();
-}
-
-export function loadBatteriesFromDisk(): void {
-  try {
-    if (fs.existsSync(BATTERIES_FILE)) {
-      const raw = fs.readFileSync(BATTERIES_FILE, 'utf-8');
-      const list: BatterySession[] = JSON.parse(raw);
-      for (const b of list) {
-        globalStore.__blackbox_batteries!.set(b.batteryId, b);
-      }
-    }
-  } catch {
-    // Ignore errors
-  }
-}
-
-export function saveBatteriesToDisk(): void {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    const list = Array.from(globalStore.__blackbox_batteries!.values());
-    fs.writeFileSync(BATTERIES_FILE, JSON.stringify(list, null, 2));
-  } catch {
-    // Ignore errors
-  }
-}
-
-// Initial load
-loadBatteriesFromDisk();
-
 export class BatteryController {
   public static async getAllBatteries(): Promise<BatterySession[]> {
-    loadBatteriesFromDisk();
-    return Array.from(globalStore.__blackbox_batteries!.values());
+    const storage = getStorage();
+    return storage.getAllBatteries();
   }
 
   public static async createBattery(modelName: string): Promise<BatterySession> {
@@ -165,16 +121,13 @@ export class BatteryController {
       levelsCleared: 0,
     };
 
-    globalStore.__blackbox_batteries!.set(batteryId, battery);
-    saveBatteriesToDisk();
+    await storage.saveBattery(battery);
     return battery;
   }
 
   public static async getBattery(batteryId: string): Promise<BatterySession | null> {
-    if (!globalStore.__blackbox_batteries!.has(batteryId)) {
-      loadBatteriesFromDisk();
-    }
-    return globalStore.__blackbox_batteries!.get(batteryId) || null;
+    const storage = getStorage();
+    return storage.getBattery(batteryId);
   }
 
   public static async getCurrentLevelInfo(batteryId: string) {
@@ -296,7 +249,7 @@ export class BatteryController {
       leaderboardSession.sessionId = battery.batteryId;
       leaderboardSession.trajectory = allTurns;
       await storage.saveSession(leaderboardSession);
-      saveBatteriesToDisk();
+      await storage.saveBattery(battery);
 
       return {
         status: 'KNOCKED_OUT',
@@ -359,7 +312,7 @@ export class BatteryController {
       leaderboardSession.sessionId = battery.batteryId;
       leaderboardSession.trajectory = allTurns;
       await storage.saveSession(leaderboardSession);
-      saveBatteriesToDisk();
+      await storage.saveBattery(battery);
 
       return {
         status: 'BATTERY_COMPLETED',
@@ -381,7 +334,7 @@ export class BatteryController {
     );
     await storage.saveSession(nextSession);
     battery.currentSessionId = nextSession.sessionId;
-    saveBatteriesToDisk();
+    await storage.saveBattery(battery);
 
     const nextBrief = BlackBoxSimulator.getBrief(nextSession);
 

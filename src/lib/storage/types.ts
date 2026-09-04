@@ -1,4 +1,4 @@
-import { SessionData } from '../engine/types';
+import { BatterySession, SessionData } from '../engine/types';
 
 export interface LeaderboardEntry {
   sessionId: string;
@@ -25,5 +25,10 @@ export interface LeaderboardEntry {
 export interface IStorageAdapter {
   saveSession(session: SessionData): Promise<void>;
   getSession(sessionId: string): Promise<SessionData | null>;
+  getAllSessions(): Promise<SessionData[]>;
   getLeaderboard(): Promise<LeaderboardEntry[]>;
+
+  saveBattery(battery: BatterySession): Promise<void>;
+  getBattery(batteryId: string): Promise<BatterySession | null>;
+  getAllBatteries(): Promise<BatterySession[]>;
 }
