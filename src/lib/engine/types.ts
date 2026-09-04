@@ -93,6 +93,7 @@ export interface ScoreBreakdown {
     zeroRegressions: boolean;
     turnsUsed: number;
     budgetRemaining: number;
+    antiCheatDisqualified?: boolean;
   };
 }
 

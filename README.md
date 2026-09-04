@@ -18,14 +18,15 @@
 4. [Simulated System Architecture (5-Node Mesh)](#4-simulated-system-architecture-5-node-mesh)
 5. [The Three Roles of the Deterministic Seed](#5-the-three-roles-of-the-deterministic-seed)
 6. [Multi-Dimensional Scoring Engine (0–1000 Points)](#6-multi-dimensional-scoring-engine-01000-points)
-7. [Two-Division Leaderboard & Empirical Baselines](#7-two-division-leaderboard--empirical-baselines)
-8. [Agent REST API & Tool Catalog](#8-agent-rest-api--tool-catalog)
-9. [Quickstart & Installation](#9-quickstart--installation)
-10. [How to Benchmark a Model](#10-how-to-benchmark-a-model)
-11. [Web UI & Mission Control Platform](#11-web-ui--mission-control-platform)
-12. [Repository Structure](#12-repository-structure)
-13. [Documentation Index (`docs/`)](#13-documentation-index-docs)
-14. [License](#14-license)
+7. [Anti-Cheat Architecture & Harness Integrity](#7-anti-cheat-architecture--harness-integrity)
+8. [Two-Division Leaderboard & Empirical Baselines](#8-two-division-leaderboard--empirical-baselines)
+9. [Agent REST API & Tool Catalog](#9-agent-rest-api--tool-catalog)
+10. [Quickstart & Installation](#10-quickstart--installation)
+11. [How to Benchmark a Model](#11-how-to-benchmark-a-model)
+12. [Web UI & Mission Control Platform](#12-web-ui--mission-control-platform)
+13. [Repository Structure](#13-repository-structure)
+14. [Documentation Index (`docs/`)](#14-documentation-index-docs)
+15. [License](#15-license)
 
 ---
 
@@ -181,7 +182,57 @@ Upon valid recovery, all affected node telemetry must reset to nominal baseline:
 
 ---
 
-## 7. Two-Division Leaderboard & Empirical Baselines
+## 7. Anti-Cheat Architecture & Harness Integrity
+
+In autonomous AI benchmarking, frontier models equipped with execution environments (such as Bash, cURL, or web fetchers) will actively attempt **Specification Gaming** and **Out-of-Band Side-Channel Cheating**. When pointed at `http://localhost:3000`, aggressive agents often attempt to scrape frontend web bundles (`/_next/static/chunks/*.js`) or inspect administrative routes to extract scenario definitions and bypass telemetry debugging.
+
+BlackBox-Ops implements a rigorous, multi-layered **Defense-in-Depth Anti-Cheat Architecture**:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    BLACKBOX-OPS ANTI-CHEAT DEFENSE LAYERS                       │
+├───────────────────────┬───────────────────────────┬─────────────────────────────┤
+│ 1. Zero-Knowledge UI  │ 2. Scraper Isolation      │ 3. Active Honeypot Tripwire │
+├───────────────────────┼───────────────────────────┼─────────────────────────────┤
+│ • Zero ground-truth   │ • Next.js Proxy/Middleware│ • Decoy chunks & routes     │
+│   enums in JS bundles │   detects CLI user-agents │ • Scraped token submission  │
+│ • Client sends        │   (curl, python, wget)    │   triggers immediate        │
+│   abstract presets    │ • Returns 403 Forbidden   │   Disqualification (Score: 0│
+│ • Server maps logic   │   on `/_next/static/*`    │ • Permanent [CHEATER] tag   │
+└───────────────────────┴───────────────────────────┴─────────────────────────────┘
+```
+
+### Layer 1: Zero-Knowledge Client Bundles
+* **Strict Runtime Isolation**: Internal archetype enum keys (`POISON_PILL_PANIC`, `LOST_UPDATE_CONCURRENCY`, `TIMEOUT_POOL_STARVATION`, `AUTH_TOKEN_ROTATION_DESYNC`) and ground-truth validation rules are completely stripped from all client components (`'use client'`).
+* **Server-Side Preset Resolution**: The evaluation kit UI submits abstract preset IDs (`problem_preset: 'prob-1'`). All archetype lookups and scenario configurations occur strictly on the backend in `/api/session/create`.
+* **Sanitized Leaderboard Feed**: The leaderboard API only transmits high-level display metadata (`domain: "Queue"`, `scenarioName: "Poison Pill Panic"`), preventing agents from learning internal enum strings via public feeds.
+
+### Layer 2: Scraper Isolation & Anti-Cheat Middleware
+* All inbound requests to Next.js static bundles (`/_next/static/*`) are intercepted by Next.js edge middleware.
+* Non-browser user agents (including `curl/*`, `python-requests/*`, `aiohttp/*`, `wget/*`, and headless HTTP tools) receive an immediate **HTTP 403 Forbidden** with an anti-cheat policy alert:
+  ```json
+  {
+    "status": 403,
+    "error": "ANTI_CHEAT_POLICY_VIOLATION",
+    "message": "Access denied: Autonomous agents and CLI scrapers are prohibited from accessing frontend client bundles."
+  }
+  ```
+* Evaluated agents are strictly constrained to interaction via the documented `/api/agent/*` and `/api/battery/*` REST interfaces.
+
+### Layer 3: Active Honeypot Tripwires
+* **Decoy Injections**: Trap tokens (such as `HONEYPOT_STATIC_CHUNK_EXPLOIT` and simulated ground-truth endpoints) are seeded in static route handlers.
+* **Instant Disqualification**: If an agent harvests and submits any honeypot token in `/api/agent/finish` or `/api/battery/{id}/advance`:
+  * Score is permanently zeroed: **0 / 1000** (`recovery: 0`, `rca: 0`, `safety: 0`, `efficiency: 0`).
+  * Session status is set to `DISQUALIFIED_CHEATING`.
+  * The model is permanently tagged on the public leaderboard with a `[DISQUALIFIED: CHEATING]` label.
+  * In the 8-Level Ladder, the battery is immediately terminated via fail-fast knockout.
+
+### Layer 4: Semantic RCA Normalization
+* Legitimate SRE evaluation requires reasoning, not proprietary keyword guessing. The RCA scoring engine normalizes responses and accepts semantic category descriptions (e.g. `"concurrency race condition"` or `"poison pill deserialization"`), eliminating the need for models to guess or scrape internal enum strings while strictly penalizing out-of-band cheating.
+
+---
+
+## 8. Two-Division Leaderboard & Empirical Baselines
 
 To maintain strict fairness, rankings are separated into two divisions:
 
@@ -225,7 +276,7 @@ To maintain strict fairness, rankings are separated into two divisions:
 
 ---
 
-## 8. Agent REST API & Tool Catalog
+## 9. Agent REST API & Tool Catalog
 
 ### A. 8-Level Survival Battery Lifecycle
 * **`POST /api/battery/create`**: Generates a new 8-level exam battery and master prompt.
@@ -252,7 +303,7 @@ To maintain strict fairness, rankings are separated into two divisions:
 
 ---
 
-## 9. Quickstart & Installation
+## 10. Quickstart & Installation
 
 ### Prerequisites
 * **Node.js**: v18.0+ (v20+ recommended)
@@ -277,7 +328,7 @@ The BlackBox-Ops Mission Control platform will be running at **`http://localhost
 
 ---
 
-## 10. How to Benchmark a Model
+## 11. How to Benchmark a Model
 
 ### Method 1: The One-Prompt Master Exam (Web UI)
 1. Open **`http://localhost:3000`**.
@@ -299,7 +350,7 @@ python3 evaluate.py --model "Claude-Opus-5" --suite standard
 
 ---
 
-## 11. Web UI & Mission Control Platform
+## 12. Web UI & Mission Control Platform
 
 Built with **Next.js 16 (Turbopack)**, **Tailwind CSS v4**, and **Lucide Icons**:
 
@@ -310,7 +361,7 @@ Built with **Next.js 16 (Turbopack)**, **Tailwind CSS v4**, and **Lucide Icons**
 
 ---
 
-## 12. Repository Structure
+## 13. Repository Structure
 
 ```
 blackbox/
@@ -342,6 +393,7 @@ blackbox/
 │       │   ├── simulator.ts            # Batch traffic & microservice state machine
 │       │   └── types.ts                # TypeScript interfaces
 │       └── storage/                    # Storage adapters (Disk JSON / Memory)
+│   └── middleware.ts                   # Next.js edge Anti-Cheat & scraper isolation proxy
 ├── .data/                              # Persistent benchmark data (sessions, batteries)
 ├── evaluate.py                         # Automated Python CLI benchmark runner
 ├── package.json                        # Node dependencies & scripts
@@ -350,7 +402,7 @@ blackbox/
 
 ---
 
-## 13. Documentation Index (`docs/`)
+## 14. Documentation Index (`docs/`)
 
 For specialized deep-dives, consult the modular documentation in `docs/`:
 
@@ -361,6 +413,6 @@ For specialized deep-dives, consult the modular documentation in `docs/`:
 
 ---
 
-## 14. License
+## 15. License
 
 BlackBox-Ops is open-source software licensed under the [MIT License](LICENSE).

@@ -17,29 +17,17 @@ export const PromptKit: React.FC<PromptKitProps> = ({ onSessionCreated }) => {
   const [loading, setLoading] = useState(false);
   const [createdSession, setCreatedSession] = useState<any>(null);
 
-  const PROB_ARCH_MAP: Record<string, string> = {
-    'prob-1': 'POISON_PILL_PANIC',
-    'prob-2': 'POISON_PILL_PANIC',
-    'prob-3': 'LOST_UPDATE_CONCURRENCY',
-    'prob-4': 'LOST_UPDATE_CONCURRENCY',
-    'prob-5': 'TIMEOUT_POOL_STARVATION',
-    'prob-6': 'TIMEOUT_POOL_STARVATION',
-    'prob-7': 'AUTH_TOKEN_ROTATION_DESYNC',
-    'prob-8': 'AUTH_TOKEN_ROTATION_DESYNC',
-  };
-
   // 1. Single Problem Creation Handler
   const handleCreateSingle = async () => {
     setLoading(true);
     try {
-      const targetArchetype = PROB_ARCH_MAP[archetype] || (archetype === 'AUTO' ? undefined : archetype);
       const res = await fetch('/api/session/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model_name: modelName,
           seed,
-          archetype_id: targetArchetype,
+          problem_preset: archetype,
           difficulty,
         }),
       });
@@ -90,6 +78,10 @@ Target API: ${typeof window !== 'undefined' ? window.location.origin : 'http://l
 Session ID: ${createdSession.session_id}
 Turn Budget: ${createdSession.budget_remaining} units
 
+RULES OF ENGAGEMENT & INTEGRITY POLICY:
+1. All queries and remediations must strictly interact with /api/agent/* REST endpoints.
+2. Scraping static frontend assets (/_next/*) or querying internal dashboard endpoints is strictly forbidden. Out-of-band scraping triggers immediate disqualification (Score: 0).
+
 Instructions:
 1. GET /api/agent/brief/${createdSession.session_id} to read the incident alert, topology, and tools.
 2. POST /api/agent/probe with {"session_id": "${createdSession.session_id}", "tool": "get_logs", "params": {"service": "worker", "limit": 20}} to inspect logs.
@@ -99,7 +91,7 @@ Instructions:
    {
      "session_id": "${createdSession.session_id}",
      "root_cause_service": "<service>",
-     "failure_category": "<one of the 4 archetypes>",
+     "failure_category": "<concise incident category: e.g. POISON_PILL, CONCURRENCY_RACE, TIMEOUT_STARVATION, or AUTH_DESYNC>",
      "triggering_condition": "<concise explanation of bug trigger>"
    }
 

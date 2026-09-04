@@ -245,7 +245,13 @@ export class BatteryController {
     if (!isPassed) {
       battery.status = 'KNOCKED_OUT';
       battery.finishedAt = new Date().toISOString();
-      battery.knockoutReason = `Failed Level ${battery.currentLevel} (${currentLevelConfig.name}): System remained degraded or triggered blast radius.`;
+      battery.knockoutReason = finishResult.score.details?.antiCheatDisqualified
+        ? `DISQUALIFIED on Level ${battery.currentLevel}: Anti-cheat tripwire triggered (out-of-band static asset scraping).`
+        : `Failed Level ${battery.currentLevel} (${currentLevelConfig.name}): System remained degraded or triggered blast radius.`;
+      
+      if (finishResult.score.details?.antiCheatDisqualified && !battery.modelName.includes('[DISQUALIFIED]')) {
+        battery.modelName += ' [DISQUALIFIED: CHEATING]';
+      }
       
       const totalScoreSum = battery.results.reduce((acc, r) => acc + r.score.total, 0);
       battery.compositeScore = Math.round(totalScoreSum / 8);

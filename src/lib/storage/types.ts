@@ -17,6 +17,9 @@ export interface LeaderboardEntry {
   finishedAt: string;
   isLadder: boolean;
   levelsCleared?: number;
+  domain?: string;
+  scenarioName?: string;
+  badgeColor?: string;
 }
 
 export interface IStorageAdapter {

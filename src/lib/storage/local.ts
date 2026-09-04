@@ -79,11 +79,22 @@ export class LocalStorageAdapter implements IStorageAdapter {
         levelsCleared = 1;
       }
 
+      const archMeta: Record<string, { name: string; domain: string; badge: string }> = {
+        POISON_PILL_PANIC: { name: 'Poison Pill Panic', domain: 'Queue', badge: 'bg-purple-950/60 text-purple-300 border-purple-800/40' },
+        LOST_UPDATE_CONCURRENCY: { name: 'Lost Update Concurrency', domain: 'Storage', badge: 'bg-blue-950/60 text-blue-300 border-blue-800/40' },
+        TIMEOUT_POOL_STARVATION: { name: 'Timeout Starvation', domain: 'Network', badge: 'bg-amber-950/60 text-amber-300 border-amber-800/40' },
+        AUTH_TOKEN_ROTATION_DESYNC: { name: 'Token Rotation Desync', domain: 'Ops', badge: 'bg-emerald-950/60 text-emerald-300 border-emerald-800/40' },
+      };
+      const info = archMeta[s.archetypeId] || { name: 'Custom Drill', domain: 'Incident', badge: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
+
       return {
         sessionId: s.sessionId,
         modelName: s.modelName,
         seed: s.seed,
-        archetypeId: s.archetypeId,
+        archetypeId: isLadder ? 'LADDER' : info.domain.toUpperCase(),
+        domain: info.domain,
+        scenarioName: info.name,
+        badgeColor: info.badge,
         difficulty: s.difficulty,
         totalScore: s.finalScore!.total,
         recovery: s.finalScore!.recovery,

@@ -50,27 +50,8 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ onSelectRepl
   const practiceEntries = entries.filter((e) => !e.isLadder);
   const filteredPractice = practiceEntries.filter((e) => {
     if (domainFilter === 'ALL') return true;
-    if (domainFilter === 'QUEUE') return e.archetypeId === 'POISON_PILL_PANIC';
-    if (domainFilter === 'STORAGE') return e.archetypeId === 'LOST_UPDATE_CONCURRENCY';
-    if (domainFilter === 'NETWORK') return e.archetypeId === 'TIMEOUT_POOL_STARVATION';
-    if (domainFilter === 'OPS') return e.archetypeId === 'AUTH_TOKEN_ROTATION_DESYNC';
-    return true;
+    return (e.domain || '').toUpperCase() === domainFilter;
   });
-
-  const getArchInfo = (id: string) => {
-    switch (id) {
-      case 'POISON_PILL_PANIC':
-        return { name: 'Poison Pill Panic', domain: 'Queue', badge: 'bg-purple-950/60 text-purple-300 border-purple-800/40' };
-      case 'LOST_UPDATE_CONCURRENCY':
-        return { name: 'Lost Update Concurrency', domain: 'Storage', badge: 'bg-blue-950/60 text-blue-300 border-blue-800/40' };
-      case 'TIMEOUT_POOL_STARVATION':
-        return { name: 'Timeout Starvation', domain: 'Network', badge: 'bg-amber-950/60 text-amber-300 border-amber-800/40' };
-      case 'AUTH_TOKEN_ROTATION_DESYNC':
-        return { name: 'Token Rotation Desync', domain: 'Ops', badge: 'bg-emerald-950/60 text-emerald-300 border-emerald-800/40' };
-      default:
-        return { name: id, domain: 'Incident', badge: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
-    }
-  };
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden shadow-xl">
@@ -277,7 +258,9 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ onSelectRepl
                   </tr>
                 ) : (
                   filteredPractice.map((entry, idx) => {
-                    const arch = getArchInfo(entry.archetypeId);
+                    const badgeClass = entry.badgeColor || 'bg-zinc-800 text-zinc-300 border-zinc-700';
+                    const scenarioTitle = entry.scenarioName || 'Drill Scenario';
+                    const domainLabel = entry.domain || 'Incident';
                     return (
                       <tr key={entry.sessionId} className="hover:bg-zinc-900/40 transition-colors">
                         <td className="py-3 px-4 font-mono font-bold text-zinc-400">
@@ -289,10 +272,10 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ onSelectRepl
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex flex-col gap-1 items-start">
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-mono border ${arch.badge}`}>
-                              {arch.name}
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}`}>
+                              {scenarioTitle}
                             </span>
-                            <span className="text-[10px] text-zinc-500 font-mono">Domain: {arch.domain}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono">Domain: {domainLabel}</span>
                           </div>
                         </td>
                         <td className="py-3 px-4 font-mono">

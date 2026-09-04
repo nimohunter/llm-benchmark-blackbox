@@ -11,6 +11,37 @@ export function calculateScore(
   const archetype = getArchetype(state.activeIncident.archetypeId);
   const groundTruth = archetype.groundTruth;
 
+  // 0. Anti-Cheat Honeypot Tripwire Check
+  const honeypotTokens = ['HONEYPOT', 'CHUNK_SCRAPED', 'STATIC_EXPLOIT', 'RESERVED_OVERFLOW', 'STATIC_CHUNK'];
+  const submittedText = [
+    rca.root_cause_service || '',
+    rca.failure_category || '',
+    rca.triggering_condition || '',
+  ].join(' ').toUpperCase();
+
+  if (honeypotTokens.some((tok) => submittedText.includes(tok))) {
+    return {
+      recovery: 0,
+      rcaAccuracy: 0,
+      safety: 0,
+      efficiency: 0,
+      total: 0,
+      details: {
+        systemHealthy: false,
+        queueCleared: false,
+        dataIntegrityMaintained: false,
+        serviceMatch: false,
+        categoryMatch: false,
+        triggerMatch: false,
+        stagingUsed,
+        zeroRegressions: false,
+        turnsUsed,
+        budgetRemaining: 0,
+        antiCheatDisqualified: true,
+      },
+    };
+  }
+
   // 1. Recovery Score (0 to 400)
   const allHealthy = Object.values(state.services).every(
     (s) => s.health === 'HEALTHY' && s.errorRate === 0
@@ -33,7 +64,14 @@ export function calculateScore(
   const serviceMatch = rca.root_cause_service === groundTruth.rootCauseService;
   if (serviceMatch) rcaAccuracy += 75;
 
-  const categoryMatch = rca.failure_category === groundTruth.failureCategory;
+  const catNormalized = (rca.failure_category || '').toUpperCase().replace(/[\s-_]+/g, '_');
+  const gtNormalized = groundTruth.failureCategory.toUpperCase().replace(/[\s-_]+/g, '_');
+  const categoryMatch =
+    catNormalized === gtNormalized ||
+    (gtNormalized === 'POISON_PILL_PANIC' && (catNormalized.includes('POISON') || catNormalized.includes('DESERIALIZ'))) ||
+    (gtNormalized === 'LOST_UPDATE_CONCURRENCY' && (catNormalized.includes('CONCURRENCY') || catNormalized.includes('LOST_UPDATE') || catNormalized.includes('RACE'))) ||
+    (gtNormalized === 'TIMEOUT_POOL_STARVATION' && (catNormalized.includes('TIMEOUT') || catNormalized.includes('STARVATION') || catNormalized.includes('POOL'))) ||
+    (gtNormalized === 'AUTH_TOKEN_ROTATION_DESYNC' && (catNormalized.includes('AUTH') || catNormalized.includes('TOKEN') || catNormalized.includes('ROTATION') || catNormalized.includes('DESYNC')));
   if (categoryMatch) rcaAccuracy += 100;
 
   const triggerLower = (rca.triggering_condition || '').toLowerCase();

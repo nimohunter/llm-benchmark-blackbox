@@ -306,8 +306,16 @@ export class BlackBoxSimulator {
     );
 
     session.finalScore = score;
+    if (score.details.antiCheatDisqualified) {
+      session.solved = false;
+      if (!session.modelName.includes('[DISQUALIFIED]')) {
+        session.modelName += ' [DISQUALIFIED: CHEATING]';
+      }
+    }
 
-    const summary = `Session finished with score ${score.total}/1000. Recovery: ${score.recovery}/400, RCA: ${score.rcaAccuracy}/250, Safety: ${score.safety}/200, Efficiency: ${score.efficiency}/150.`;
+    const summary = score.details.antiCheatDisqualified
+      ? `DISQUALIFIED: Anti-cheat tripwire triggered. Out-of-band static scraping detected. Score: 0/1000.`
+      : `Session finished with score ${score.total}/1000. Recovery: ${score.recovery}/400, RCA: ${score.rcaAccuracy}/250, Safety: ${score.safety}/200, Efficiency: ${score.efficiency}/150.`;
 
     const turnRecord: TurnRecord = {
       turn: session.currentTurn + 1,

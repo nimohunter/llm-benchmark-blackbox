@@ -19,6 +19,11 @@ Exam Details:
 • Target API: ${origin}
 • Total Levels: 8 (L1: Queue Deserialization -> L8: Silent Ledger Drift)
 
+RULES OF ENGAGEMENT & INTEGRITY POLICY:
+• All interactions must strictly occur via the provided /api/battery/* and /api/agent/* REST endpoints.
+• Scraping static frontend assets (/_next/*) or querying internal dashboard endpoints is strictly forbidden.
+• Out-of-band scraping triggers anti-cheat tripwires resulting in immediate disqualification (Score: 0).
+
 EXAMINATION PROTOCOL:
 1. START: Fetch your current level's problem brief via:
    GET ${origin}/api/battery/${battery.batteryId}/current
@@ -36,7 +41,7 @@ EXAMINATION PROTOCOL:
    {
      "session_id": "<current_session_id>",
      "root_cause_service": "gateway"|"queue"|"worker"|"db"|"external",
-     "failure_category": "<category_enum>",
+     "failure_category": "<concise incident category: e.g. POISON_PILL, CONCURRENCY_RACE, TIMEOUT_STARVATION, or AUTH_DESYNC>",
      "triggering_condition": "<concise explanation of bug trigger>"
    }
 
