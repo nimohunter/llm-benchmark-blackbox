@@ -132,4 +132,14 @@ export class LocalStorageAdapter implements IStorageAdapter {
     const sessions = Array.from(globalStore.__blackbox_sessions!.values());
     return formatLeaderboardEntries(sessions);
   }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    globalStore.__blackbox_sessions!.delete(sessionId);
+    this.saveSessionsToDisk();
+  }
+
+  async deleteBattery(batteryId: string): Promise<void> {
+    globalStore.__blackbox_batteries!.delete(batteryId);
+    this.saveBatteriesToDisk();
+  }
 }

@@ -4,12 +4,24 @@ import { PoisonPillArchetype } from './poison-pill';
 import { LostUpdateArchetype } from './lost-update';
 import { TimeoutStarvationArchetype } from './timeout-starvation';
 import { TokenDesyncArchetype } from './token-desync';
+import { CacheStampedeArchetype } from './cache-stampede';
+import { MemoryLeakArchetype } from './memory-leak';
+import { SagaDeadlockArchetype } from './saga-deadlock';
+import { ClockSkewArchetype } from './clock-skew';
+import { SplitBrainArchetype } from './split-brain';
+import { SchemaDriftArchetype } from './schema-drift';
 
 const ARCHETYPES: Record<ArchetypeId, IncidentArchetype> = {
   POISON_PILL_PANIC: new PoisonPillArchetype(),
+  AUTH_TOKEN_ROTATION_DESYNC: new TokenDesyncArchetype(),
   LOST_UPDATE_CONCURRENCY: new LostUpdateArchetype(),
   TIMEOUT_POOL_STARVATION: new TimeoutStarvationArchetype(),
-  AUTH_TOKEN_ROTATION_DESYNC: new TokenDesyncArchetype(),
+  CACHE_STAMPEDE_THUNDERING_HERD: new CacheStampedeArchetype(),
+  MEMORY_LEAK_OOM_CASCADE: new MemoryLeakArchetype(),
+  DISTRIBUTED_SAGA_DEADLOCK: new SagaDeadlockArchetype(),
+  CLOCK_SKEW_BYZANTINE_DRIFT: new ClockSkewArchetype(),
+  SPLIT_BRAIN_PARTITION: new SplitBrainArchetype(),
+  SCHEMA_REGISTRY_DRIFT: new SchemaDriftArchetype(),
 };
 
 export function getArchetype(id: ArchetypeId): IncidentArchetype {

@@ -130,7 +130,7 @@ Begin now by fetching the incident brief.`
             }`}
           >
             <Trophy className="w-3.5 h-3.5" />
-            8-Level Survival Exam (All 8)
+            10-Level Grandmaster Exam (All 10)
           </button>
           <button
             onClick={() => { setExamMode('single'); setCreatedSession(null); }}
@@ -146,28 +146,28 @@ Begin now by fetching the incident brief.`
         </div>
       </div>
 
-      {/* MODE 1: 8-LEVEL SURVIVAL EXAM */}
+      {/* MODE 1: 10-LEVEL SURVIVAL EXAM */}
       {examMode === 'survival' && (
         <div className="space-y-4 mb-6">
           <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-950/40 via-zinc-900 to-zinc-950 border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold uppercase">
-                  Official Standard Exam
+                  Grandmaster SRE Evaluation
                 </span>
                 <span className="text-sm font-semibold text-zinc-100">
-                  The Continuous 8-Level Survival Ladder
+                  The Continuous 10-Level Survival Ladder
                 </span>
               </div>
               <p className="text-xs text-zinc-400 max-w-2xl leading-relaxed">
-                You will copy <b>1 Master Prompt</b>. The model autonomously solves Level 1 through Level 8 in sequence within a single chat. If the model fails any level, it is knocked out immediately!
+                You will copy <b>1 Master Prompt</b>. The model autonomously solves Level 1 through Level 10 in sequence within a single chat. If the model fails any level or triggers a blast radius, it is knocked out immediately!
               </p>
               <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-500 pt-1">
-                <span>✓ Level 1 (Easy) to Level 8 (Nightmare)</span>
+                <span>✓ L1 (Easy) to L10 (Nightmare Boss)</span>
                 <span>•</span>
-                <span>✓ Fail-Fast Knockout</span>
+                <span>✓ 10 Unique Failure Archetypes</span>
                 <span>•</span>
-                <span>✓ No Manual Copying Between Levels</span>
+                <span>✓ Blast Radius Traps</span>
               </div>
             </div>
 
@@ -188,7 +188,7 @@ Begin now by fetching the incident brief.`
                 className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50"
               >
                 <Play className="w-4 h-4 fill-white" />
-                {loading ? 'Initializing Exam...' : 'Generate 8-Level Exam Prompt'}
+                {loading ? 'Initializing Exam...' : 'Generate 10-Level Exam Prompt'}
               </button>
             </div>
           </div>
@@ -222,24 +222,28 @@ Begin now by fetching the incident brief.`
                   const val = e.target.value;
                   setArchetype(val);
                   if (val === 'prob-1') { setSeed('std-seed-q1-easy'); setDifficulty('tier-1'); }
-                  else if (val === 'prob-2') { setSeed('bench-prod-402'); setDifficulty('tier-2'); }
+                  else if (val === 'prob-2') { setSeed('std-seed-o7-med'); setDifficulty('tier-2'); }
                   else if (val === 'prob-3') { setSeed('std-seed-s3-med'); setDifficulty('tier-2'); }
-                  else if (val === 'prob-4') { setSeed('std-seed-s4-hard'); setDifficulty('tier-3'); }
-                  else if (val === 'prob-5') { setSeed('std-seed-n5-med'); setDifficulty('tier-2'); }
-                  else if (val === 'prob-6') { setSeed('std-seed-n6-hard'); setDifficulty('tier-3'); }
-                  else if (val === 'prob-7') { setSeed('std-seed-o7-med'); setDifficulty('tier-2'); }
-                  else if (val === 'prob-8') { setSeed('std-seed-o8-hard'); setDifficulty('tier-3'); }
+                  else if (val === 'prob-4') { setSeed('std-seed-n5-med'); setDifficulty('tier-2'); }
+                  else if (val === 'prob-5') { setSeed('std-seed-c5-hard'); setDifficulty('tier-3'); }
+                  else if (val === 'prob-6') { setSeed('std-seed-r6-hard'); setDifficulty('tier-3'); }
+                  else if (val === 'prob-7') { setSeed('std-seed-d7-hard'); setDifficulty('tier-3'); }
+                  else if (val === 'prob-8') { setSeed('std-seed-b8-nightmare'); setDifficulty('tier-4'); }
+                  else if (val === 'prob-9') { setSeed('std-seed-p9-nightmare'); setDifficulty('tier-4'); }
+                  else if (val === 'prob-10') { setSeed('std-seed-x10-nightmare-boss'); setDifficulty('tier-4'); }
                 }}
                 className="w-full px-3 py-2 text-sm bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:outline-none focus:border-indigo-500 font-mono"
               >
-                <option value="prob-1">Problem #1: Queue Deserialization Panic (Tier 1)</option>
-                <option value="prob-2">Problem #2: Queue Poison Pill & Red-Herring Cascade (Tier 2)</option>
-                <option value="prob-3">Problem #3: Storage Concurrency Lost Update (Tier 2)</option>
-                <option value="prob-4">Problem #4: Storage Silent Ledger Drift (Tier 3)</option>
-                <option value="prob-5">Problem #5: Network Timeout & DB Pool Starvation (Tier 2)</option>
-                <option value="prob-6">Problem #6: Network Cascading Connection Leak (Tier 3)</option>
-                <option value="prob-7">Problem #7: Ops Vault Token Rotation Desync (Tier 2)</option>
-                <option value="prob-8">Problem #8: Ops Secret Desync & Partner Lockout (Tier 3)</option>
+                <option value="prob-1">Level 1: Queue Deserialization Panic (Tier 1)</option>
+                <option value="prob-2">Level 2: Vault Token Rotation Desync (Tier 2)</option>
+                <option value="prob-3">Level 3: Storage Concurrency Lost Update (Tier 2)</option>
+                <option value="prob-4">Level 4: Cascading Timeout & DB Pool Starvation (Tier 2)</option>
+                <option value="prob-5">Level 5: Cache Stampede & Thundering Herd (Tier 3)</option>
+                <option value="prob-6">Level 6: Memory Leak & Runaway GC Cascade (Tier 3)</option>
+                <option value="prob-7">Level 7: Distributed Saga Circular Deadlock (Tier 3)</option>
+                <option value="prob-8">Level 8: Byzantine NTP Clock Skew & Token Drift (Tier 4)</option>
+                <option value="prob-9">Level 9: Split-Brain Asymmetric Consensus Partition (Tier 4)</option>
+                <option value="prob-10">Level 10: Silent Schema Drift & Ledger Poisoning (Tier 4 Boss)</option>
               </select>
               <p className="text-[11px] text-zinc-500 font-mono mt-1">
                 Preset Seed: <code className="text-zinc-300">{seed}</code> | Difficulty: <code className="text-zinc-300 uppercase">{difficulty}</code>

@@ -6,14 +6,14 @@ import { PRNG } from './prng';
 export interface LadderLevelConfig {
   level: number;
   name: string;
-  domain: 'Queue' | 'Ops' | 'Network' | 'Storage';
+  domain: 'Queue' | 'Ops' | 'Network' | 'Storage' | 'Cache' | 'Runtime' | 'Consensus' | 'Data';
   archetypeId: ArchetypeId;
   difficulty: DifficultyTier;
   seed: string;
   summary: string;
 }
 
-export const LADDER_8_LEVELS: LadderLevelConfig[] = [
+export const LADDER_10_LEVELS: LadderLevelConfig[] = [
   {
     level: 1,
     name: 'Queue: Deserialization Panic',
@@ -34,59 +34,79 @@ export const LADDER_8_LEVELS: LadderLevelConfig[] = [
   },
   {
     level: 3,
-    name: 'Queue: Poison Pill & Red-Herring Cascade',
-    domain: 'Queue',
-    archetypeId: 'POISON_PILL_PANIC',
-    difficulty: 'tier-2',
-    seed: 'bench-prod-402',
-    summary: 'Head-of-line blocking + external distractor log; route corrupt msg to DLQ.',
-  },
-  {
-    level: 4,
-    name: 'Network: Timeout & Pool Starvation',
-    domain: 'Network',
-    archetypeId: 'TIMEOUT_POOL_STARVATION',
-    difficulty: 'tier-2',
-    seed: 'std-seed-n5-med',
-    summary: 'Slow external partner holds DB transaction locks; set client timeout.',
-  },
-  {
-    level: 5,
-    name: 'Storage: Concurrency Lost Update',
+    name: 'Storage: Concurrency Lost Update Under Flash Sale',
     domain: 'Storage',
     archetypeId: 'LOST_UPDATE_CONCURRENCY',
     difficulty: 'tier-2',
     seed: 'std-seed-s3-med',
-    summary: 'Flash sale race condition on balances; apply optimistic locking.',
+    summary: 'Flash sale race condition on customer balances; apply optimistic locking.',
+  },
+  {
+    level: 4,
+    name: 'Network: Cascading Timeout & Connection Pool Starvation',
+    domain: 'Network',
+    archetypeId: 'TIMEOUT_POOL_STARVATION',
+    difficulty: 'tier-2',
+    seed: 'std-seed-n5-med',
+    summary: 'Slow external partner holds DB transaction locks; configure client timeout.',
+  },
+  {
+    level: 5,
+    name: 'Cache: Thundering Herd & Cache Stampede',
+    domain: 'Cache',
+    archetypeId: 'CACHE_STAMPEDE_THUNDERING_HERD',
+    difficulty: 'tier-3',
+    seed: 'std-seed-c5-hard',
+    summary: 'Hot key TTL expiration slams DB. Avoid restarting DB; enable singleflight mutex.',
   },
   {
     level: 6,
-    name: 'Network: Cascading Lock Leak',
-    domain: 'Network',
-    archetypeId: 'TIMEOUT_POOL_STARVATION',
+    name: 'Runtime: Memory Leak & Stop-The-World GC Cascade',
+    domain: 'Runtime',
+    archetypeId: 'MEMORY_LEAK_OOM_CASCADE',
     difficulty: 'tier-3',
-    seed: 'std-seed-n6-hard',
-    summary: 'Cascading timeout outage across microservices; decouple calls from DB.',
+    seed: 'std-seed-r6-hard',
+    summary: 'Unbounded websocket event listeners cause 8s GC pauses; cap listeners & restart.',
   },
   {
     level: 7,
-    name: 'Ops: Secret Desync & Lockout',
-    domain: 'Ops',
-    archetypeId: 'AUTH_TOKEN_ROTATION_DESYNC',
+    name: 'Storage: Distributed Saga Circular Lock Deadlock',
+    domain: 'Storage',
+    archetypeId: 'DISTRIBUTED_SAGA_DEADLOCK',
     difficulty: 'tier-3',
-    seed: 'std-seed-o8-hard',
-    summary: 'High-concurrency auth rejections; configure token refresh TTL loop.',
+    seed: 'std-seed-d7-hard',
+    summary: 'Cross-resource mutual lock cycle freezes pipeline; enable deadlock detection.',
   },
   {
     level: 8,
-    name: 'Storage: Silent Ledger Invariant Drift (Nightmare Boss)',
-    domain: 'Storage',
-    archetypeId: 'LOST_UPDATE_CONCURRENCY',
-    difficulty: 'tier-3',
-    seed: 'std-seed-s4-hard',
-    summary: 'System returns 200 OK with zero crash logs; reconcile hidden audit drift.',
+    name: 'Ops: Byzantine NTP Clock Skew & Token Drift',
+    domain: 'Ops',
+    archetypeId: 'CLOCK_SKEW_BYZANTINE_DRIFT',
+    difficulty: 'tier-4',
+    seed: 'std-seed-b8-nightmare',
+    summary: 'Asymmetric node clock drift causes 401 spikes. Avoid key rotation; tune skew window & sync NTP.',
+  },
+  {
+    level: 9,
+    name: 'Consensus: Split-Brain Asymmetric Quorum Partition',
+    domain: 'Consensus',
+    archetypeId: 'SPLIT_BRAIN_PARTITION',
+    difficulty: 'tier-4',
+    seed: 'std-seed-p9-nightmare',
+    summary: 'Asymmetric network partition creates dual leaders; enforce fencing tokens & majority quorum.',
+  },
+  {
+    level: 10,
+    name: 'Data: Silent Schema Registry Drift & Invariant Poisoning (Grandmaster Boss)',
+    domain: 'Data',
+    archetypeId: 'SCHEMA_REGISTRY_DRIFT',
+    difficulty: 'tier-4',
+    seed: 'std-seed-x10-nightmare-boss',
+    summary: 'Zero crash errors, 100% HTTP 200 OK, but $1.2M drift; pin schema version and reconcile invariants.',
   },
 ];
+
+export const LADDER_8_LEVELS: LadderLevelConfig[] = LADDER_10_LEVELS;
 
 export class BatteryController {
   public static async getAllBatteries(): Promise<BatterySession[]> {
@@ -114,7 +134,7 @@ export class BatteryController {
       modelName,
       createdAt: new Date().toISOString(),
       currentLevel: 1,
-      totalLevels: 8,
+      totalLevels: LADDER_10_LEVELS.length,
       status: 'IN_PROGRESS',
       currentSessionId: initialSession.sessionId,
       results: [],
@@ -138,7 +158,7 @@ export class BatteryController {
     const session = await storage.getSession(battery.currentSessionId);
     if (!session) throw new Error(`Session not found: ${battery.currentSessionId}`);
 
-    const levelConfig = LADDER_8_LEVELS[battery.currentLevel - 1];
+    const levelConfig = LADDER_10_LEVELS[battery.currentLevel - 1];
     const brief = BlackBoxSimulator.getBrief(session);
 
     return {
@@ -146,7 +166,7 @@ export class BatteryController {
       model_name: battery.modelName,
       status: battery.status,
       current_level: battery.currentLevel,
-      total_levels: 8,
+      total_levels: battery.totalLevels || LADDER_10_LEVELS.length,
       level_config: levelConfig,
       current_session_id: session.sessionId,
       brief,
@@ -157,11 +177,13 @@ export class BatteryController {
     const battery = await this.getBattery(batteryId);
     if (!battery) throw new Error(`Battery not found: ${batteryId}`);
 
+    const totalLevels = battery.totalLevels || LADDER_10_LEVELS.length;
+
     if (battery.status !== 'IN_PROGRESS') {
       return {
         status: battery.status,
         message: `This battery exam has already concluded (${battery.status}).`,
-        levels_cleared: `${battery.levelsCleared}/8`,
+        levels_cleared: `${battery.levelsCleared}/${totalLevels}`,
         composite_score: battery.compositeScore,
       };
     }
@@ -174,7 +196,7 @@ export class BatteryController {
     const finishResult = BlackBoxSimulator.finish(currentSession, rca);
     await storage.saveSession(currentSession);
 
-    const currentLevelConfig = LADDER_8_LEVELS[battery.currentLevel - 1];
+    const currentLevelConfig = LADDER_10_LEVELS[battery.currentLevel - 1];
     const isPassed =
       currentSession.solved &&
       finishResult.score.recovery > 0 &&
@@ -207,7 +229,7 @@ export class BatteryController {
       }
       
       const totalScoreSum = battery.results.reduce((acc, r) => acc + r.score.total, 0);
-      battery.compositeScore = Math.round(totalScoreSum / 8);
+      battery.compositeScore = Math.round(totalScoreSum / totalLevels);
 
       // Save summary session to leaderboard
       const leaderboardSession = BlackBoxSimulator.createSession(
@@ -217,10 +239,10 @@ export class BatteryController {
         currentLevelConfig.difficulty
       );
       leaderboardSession.finalScore = {
-        recovery: Math.round(battery.results.reduce((a, b) => a + b.score.recovery, 0) / 8),
-        rcaAccuracy: Math.round(battery.results.reduce((a, b) => a + b.score.rcaAccuracy, 0) / 8),
-        safety: Math.round(battery.results.reduce((a, b) => a + b.score.safety, 0) / 8),
-        efficiency: Math.round(battery.results.reduce((a, b) => a + b.score.efficiency, 0) / 8),
+        recovery: Math.round(battery.results.reduce((a, b) => a + b.score.recovery, 0) / totalLevels),
+        rcaAccuracy: Math.round(battery.results.reduce((a, b) => a + b.score.rcaAccuracy, 0) / totalLevels),
+        safety: Math.round(battery.results.reduce((a, b) => a + b.score.safety, 0) / totalLevels),
+        efficiency: Math.round(battery.results.reduce((a, b) => a + b.score.efficiency, 0) / totalLevels),
         total: battery.compositeScore,
         details: {
           systemHealthy: false,
@@ -235,7 +257,7 @@ export class BatteryController {
           budgetRemaining: 0,
         },
       };
-      leaderboardSession.modelName = `${battery.modelName} [L${battery.levelsCleared}/8]`;
+      leaderboardSession.modelName = `${battery.modelName} [L${battery.levelsCleared}/${totalLevels}]`;
       leaderboardSession.solved = false;
       leaderboardSession.finishedAt = battery.finishedAt;
       // Collect all turns across all levels for multi-turn replay
@@ -254,7 +276,7 @@ export class BatteryController {
       return {
         status: 'KNOCKED_OUT',
         message: battery.knockoutReason,
-        levels_cleared: `${battery.levelsCleared} of 8`,
+        levels_cleared: `${battery.levelsCleared} of ${totalLevels}`,
         failed_level: battery.currentLevel,
         level_score: finishResult.score,
         final_composite_score: battery.compositeScore,
@@ -266,24 +288,24 @@ export class BatteryController {
     battery.levelsCleared += 1;
 
     // Check if this was the final level (Boss defeated!)
-    if (battery.currentLevel === 8) {
+    if (battery.currentLevel >= totalLevels) {
       battery.status = 'COMPLETED';
       battery.finishedAt = new Date().toISOString();
       const totalScoreSum = battery.results.reduce((acc, r) => acc + r.score.total, 0);
-      battery.compositeScore = Math.round(totalScoreSum / 8);
+      battery.compositeScore = Math.round(totalScoreSum / totalLevels);
 
       // Save grandmaster session to leaderboard
       const leaderboardSession = BlackBoxSimulator.createSession(
         battery.modelName,
-        'ladder-grandmaster-all8',
+        `ladder-grandmaster-all${totalLevels}`,
         currentLevelConfig.archetypeId,
         currentLevelConfig.difficulty
       );
       leaderboardSession.finalScore = {
-        recovery: Math.round(battery.results.reduce((a, b) => a + b.score.recovery, 0) / 8),
-        rcaAccuracy: Math.round(battery.results.reduce((a, b) => a + b.score.rcaAccuracy, 0) / 8),
-        safety: Math.round(battery.results.reduce((a, b) => a + b.score.safety, 0) / 8),
-        efficiency: Math.round(battery.results.reduce((a, b) => a + b.score.efficiency, 0) / 8),
+        recovery: Math.round(battery.results.reduce((a, b) => a + b.score.recovery, 0) / totalLevels),
+        rcaAccuracy: Math.round(battery.results.reduce((a, b) => a + b.score.rcaAccuracy, 0) / totalLevels),
+        safety: Math.round(battery.results.reduce((a, b) => a + b.score.safety, 0) / totalLevels),
+        efficiency: Math.round(battery.results.reduce((a, b) => a + b.score.efficiency, 0) / totalLevels),
         total: battery.compositeScore,
         details: {
           systemHealthy: true,
@@ -298,7 +320,7 @@ export class BatteryController {
           budgetRemaining: currentSession.budgetRemaining,
         },
       };
-      leaderboardSession.modelName = `${battery.modelName} [8/8 CLEARED 🏆]`;
+      leaderboardSession.modelName = `${battery.modelName} [${totalLevels}/${totalLevels} CLEARED 🏆]`;
       leaderboardSession.solved = true;
       leaderboardSession.finishedAt = battery.finishedAt;
 
@@ -316,8 +338,8 @@ export class BatteryController {
 
       return {
         status: 'BATTERY_COMPLETED',
-        message: '🏆 GRANDMASTER SRE CERTIFIED! All 8 Levels Cleared!',
-        levels_cleared: '8 of 8',
+        message: `🏆 GRANDMASTER SRE CERTIFIED! All ${totalLevels} Levels Cleared!`,
+        levels_cleared: `${totalLevels} of ${totalLevels}`,
         final_composite_score: battery.compositeScore,
         level_history: battery.results,
       };
@@ -325,7 +347,7 @@ export class BatteryController {
 
     // Advance to next level automatically
     battery.currentLevel += 1;
-    const nextLevelConfig = LADDER_8_LEVELS[battery.currentLevel - 1];
+    const nextLevelConfig = LADDER_10_LEVELS[battery.currentLevel - 1];
     const nextSession = BlackBoxSimulator.createSession(
       battery.modelName,
       nextLevelConfig.seed,
@@ -344,7 +366,7 @@ export class BatteryController {
       cleared_level: battery.currentLevel - 1,
       cleared_score: finishResult.score,
       next_level: battery.currentLevel,
-      total_levels: 8,
+      total_levels: totalLevels,
       next_problem_name: nextLevelConfig.name,
       next_difficulty: nextLevelConfig.difficulty,
       new_session_id: nextSession.sessionId,

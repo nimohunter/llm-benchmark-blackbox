@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { TopologyMap } from '@/components/TopologyMap';
 import { PromptKit } from '@/components/PromptKit';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
@@ -158,6 +159,13 @@ export default function Home() {
               <History className="w-3.5 h-3.5" />
               Audit Replay
             </button>
+            <Link
+              href="/live"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-rose-300 hover:text-white hover:bg-rose-950/60 transition-colors font-medium border border-rose-500/40 ml-1 bg-rose-950/20"
+            >
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              Live Arena
+            </Link>
           </div>
         </div>
       </header>

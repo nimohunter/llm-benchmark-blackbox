@@ -6,11 +6,17 @@ export type ArchetypeId =
   | 'POISON_PILL_PANIC'
   | 'LOST_UPDATE_CONCURRENCY'
   | 'TIMEOUT_POOL_STARVATION'
-  | 'AUTH_TOKEN_ROTATION_DESYNC';
+  | 'AUTH_TOKEN_ROTATION_DESYNC'
+  | 'CACHE_STAMPEDE_THUNDERING_HERD'
+  | 'MEMORY_LEAK_OOM_CASCADE'
+  | 'DISTRIBUTED_SAGA_DEADLOCK'
+  | 'CLOCK_SKEW_BYZANTINE_DRIFT'
+  | 'SPLIT_BRAIN_PARTITION'
+  | 'SCHEMA_REGISTRY_DRIFT';
 
-export type IncidentDomain = 'queue' | 'storage' | 'network' | 'ops';
+export type IncidentDomain = 'queue' | 'storage' | 'network' | 'ops' | 'cache' | 'runtime' | 'consensus' | 'data';
 
-export type DifficultyTier = 'tier-1' | 'tier-2' | 'tier-3';
+export type DifficultyTier = 'tier-1' | 'tier-2' | 'tier-3' | 'tier-4';
 
 export interface ServiceMetrics {
   health: ServiceHealth;

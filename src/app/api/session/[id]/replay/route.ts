@@ -49,31 +49,49 @@ export async function GET(
           }
         }
 
+        let currentServices = null;
+        if (battery.currentSessionId) {
+          const currSess = await storage.getSession(battery.currentSessionId);
+          if (currSess) {
+            currentServices = currSess.state?.services || null;
+            if (currSess.trajectory && battery.status === 'IN_PROGRESS') {
+              for (const t of currSess.trajectory) {
+                allTurns.push({
+                  ...t,
+                  level: battery.currentLevel,
+                  problemName: `Level ${battery.currentLevel} (In Progress)`,
+                });
+              }
+            }
+          }
+        }
+
         return NextResponse.json({
           success: true,
           is_battery: true,
           battery_id: battery.batteryId,
           session_id: battery.batteryId,
           model_name: battery.modelName,
-          seed: 'ladder-8-survival',
+          seed: 'ladder-survival',
           archetype_id: 'LADDER_SURVIVAL',
-          difficulty: 'Multi-Tier (T1-T3)',
+          difficulty: 'Multi-Tier',
           created_at: battery.createdAt,
           finished_at: battery.finishedAt,
           is_active: battery.status === 'IN_PROGRESS',
           current_turn: allTurns.length,
           levels_cleared: battery.levelsCleared,
-          total_levels: 8,
+          total_levels: battery.totalLevels || 8,
           status: battery.status,
           solved: battery.status === 'COMPLETED',
+          services: currentServices,
           levels: levelsInfo,
           trajectory: allTurns,
           final_score: {
             total: battery.compositeScore ?? 0,
-            recovery: Math.round(battery.results.reduce((a, b) => a + b.score.recovery, 0) / 8),
-            rcaAccuracy: Math.round(battery.results.reduce((a, b) => a + b.score.rcaAccuracy, 0) / 8),
-            safety: Math.round(battery.results.reduce((a, b) => a + b.score.safety, 0) / 8),
-            efficiency: Math.round(battery.results.reduce((a, b) => a + b.score.efficiency, 0) / 8),
+            recovery: Math.round(battery.results.reduce((a, b) => a + b.score.recovery, 0) / (battery.results.length || 1)),
+            rcaAccuracy: Math.round(battery.results.reduce((a, b) => a + b.score.rcaAccuracy, 0) / (battery.results.length || 1)),
+            safety: Math.round(battery.results.reduce((a, b) => a + b.score.safety, 0) / (battery.results.length || 1)),
+            efficiency: Math.round(battery.results.reduce((a, b) => a + b.score.efficiency, 0) / (battery.results.length || 1)),
           },
         });
       }

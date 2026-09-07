@@ -31,4 +31,7 @@ export interface IStorageAdapter {
   saveBattery(battery: BatterySession): Promise<void>;
   getBattery(batteryId: string): Promise<BatterySession | null>;
   getAllBatteries(): Promise<BatterySession[]>;
+
+  deleteSession(sessionId: string): Promise<void>;
+  deleteBattery(batteryId: string): Promise<void>;
 }

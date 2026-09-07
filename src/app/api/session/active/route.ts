@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getStorage } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const globalStore = globalThis as unknown as {
-      __blackbox_sessions?: Map<string, any>;
-      __blackbox_batteries?: Map<string, any>;
-    };
+    const storage = getStorage();
+    const [batteries, sessions] = await Promise.all([
+      storage.getAllBatteries(),
+      storage.getAllSessions(),
+    ]);
 
-    const TEN_MINUTES_MS = 10 * 60 * 1000;
+    const sessionMap = new Map(sessions.map((s) => [s.sessionId, s]));
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
     const now = Date.now();
 
     const activeList: Array<{
@@ -16,67 +19,81 @@ export async function GET() {
       type: 'battery' | 'single';
       status: string;
       level?: string;
+      currentLevel?: number;
+      totalLevels?: number;
+      levelsCleared?: number;
       createdAt: string;
+      finishedAt?: string;
       turnsUsed: number;
+      currentSessionId?: string;
+      compositeScore?: number;
     }> = [];
 
-    // 1. Collect active batteries
-    if (globalStore.__blackbox_batteries) {
-      for (const [batId, bat] of globalStore.__blackbox_batteries.entries()) {
-        const ageMs = now - new Date(bat.createdAt).getTime();
+    // 1. Process batteries
+    for (const bat of batteries) {
+      const createdTime = new Date(bat.createdAt).getTime();
+      const ageMs = now - createdTime;
 
-        // Expire if not IN_PROGRESS or if idle with 0 turns for > 10m
-        if (bat.status !== 'IN_PROGRESS') {
-          continue;
-        }
-        if (ageMs > TEN_MINUTES_MS && bat.results.length === 0) {
-          globalStore.__blackbox_batteries.delete(batId);
-          continue;
-        }
-
-        activeList.push({
-          id: batId,
-          name: bat.modelName,
-          type: 'battery',
-          status: bat.status,
-          level: `L${bat.currentLevel}/8`,
-          createdAt: bat.createdAt,
-          turnsUsed: bat.results.length,
-        });
+      // Keep if IN_PROGRESS, or if finished within last 2 hours
+      if (bat.status !== 'IN_PROGRESS' && ageMs > TWO_HOURS_MS) {
+        continue;
       }
+
+      // Calculate total turns including active session's in-flight turns
+      const currentSession = bat.currentSessionId ? sessionMap.get(bat.currentSessionId) : null;
+      const finishedTurns = bat.results ? bat.results.reduce((acc, r) => acc + (r.turnsUsed || 0), 0) : 0;
+      const inFlightTurns = currentSession ? currentSession.currentTurn : 0;
+      const totalTurns = finishedTurns + inFlightTurns;
+
+      activeList.push({
+        id: bat.batteryId,
+        name: bat.modelName,
+        type: 'battery',
+        status: bat.status,
+        level: `L${bat.currentLevel}/${bat.totalLevels || 8}`,
+        currentLevel: bat.currentLevel,
+        totalLevels: bat.totalLevels || 8,
+        levelsCleared: bat.levelsCleared || 0,
+        createdAt: bat.createdAt,
+        finishedAt: bat.finishedAt,
+        turnsUsed: totalTurns,
+        currentSessionId: bat.currentSessionId,
+        compositeScore: bat.compositeScore,
+      });
     }
 
-    // 2. Collect active single sessions
-    if (globalStore.__blackbox_sessions) {
-      for (const [sessId, sess] of globalStore.__blackbox_sessions.entries()) {
-        const ageMs = now - new Date(sess.createdAt).getTime();
-
-        // Expire if finished, or if idle with 0 turns for > 10m
-        if (sess.finishedAt) {
-          continue;
-        }
-        if (sessId.includes('battery') || sessId.startsWith('bat-')) {
-          continue;
-        }
-        if (ageMs > TEN_MINUTES_MS && sess.currentTurn === 0) {
-          globalStore.__blackbox_sessions.delete(sessId);
-          continue;
-        }
-
-        activeList.push({
-          id: sessId,
-          name: sess.modelName,
-          type: 'single',
-          status: sess.solved ? 'RESOLVED' : 'ACTIVE',
-          level: sess.difficulty,
-          createdAt: sess.createdAt,
-          turnsUsed: sess.currentTurn,
-        });
+    // 2. Process standalone single sessions
+    for (const sess of sessions) {
+      if (sess.sessionId.includes('battery') || sess.sessionId.startsWith('bat-') || sess.seed?.startsWith('ladder-')) {
+        continue;
       }
+
+      const createdTime = new Date(sess.createdAt).getTime();
+      const ageMs = now - createdTime;
+
+      if (sess.finishedAt && ageMs > TWO_HOURS_MS) {
+        continue;
+      }
+
+      activeList.push({
+        id: sess.sessionId,
+        name: sess.modelName,
+        type: 'single',
+        status: sess.finishedAt ? (sess.solved ? 'RESOLVED' : 'FAILED') : (sess.solved ? 'RESOLVED' : 'ACTIVE'),
+        level: sess.difficulty,
+        createdAt: sess.createdAt,
+        finishedAt: sess.finishedAt,
+        turnsUsed: sess.currentTurn,
+        compositeScore: sess.finalScore?.total,
+      });
     }
 
-    // Sort by newest first
-    activeList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Sort: IN_PROGRESS first, then newest first
+    activeList.sort((a, b) => {
+      if (a.status === 'IN_PROGRESS' && b.status !== 'IN_PROGRESS') return -1;
+      if (b.status === 'IN_PROGRESS' && a.status !== 'IN_PROGRESS') return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
     return NextResponse.json({
       success: true,
@@ -97,15 +114,11 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing id parameter' }, { status: 400 });
     }
 
-    const globalStore = globalThis as unknown as {
-      __blackbox_sessions?: Map<string, any>;
-      __blackbox_batteries?: Map<string, any>;
-    };
-
-    if (id.startsWith('bat-') && globalStore.__blackbox_batteries) {
-      globalStore.__blackbox_batteries.delete(id);
-    } else if (globalStore.__blackbox_sessions) {
-      globalStore.__blackbox_sessions.delete(id);
+    const storage = getStorage();
+    if (id.startsWith('bat-')) {
+      await storage.deleteBattery(id);
+    } else {
+      await storage.deleteSession(id);
     }
 
     return NextResponse.json({ success: true, dismissed: id });

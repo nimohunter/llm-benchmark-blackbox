@@ -108,4 +108,16 @@ export class RedisStorageAdapter implements IStorageAdapter {
     const results = await pipeline.exec<BatterySession[]>();
     return results.filter(Boolean);
   }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    await this.ensureSeeded();
+    await this.redis.del(`blackbox:session:${sessionId}`);
+    await this.redis.srem('blackbox:sessions:index', sessionId);
+  }
+
+  async deleteBattery(batteryId: string): Promise<void> {
+    await this.ensureSeeded();
+    await this.redis.del(`blackbox:battery:${batteryId}`);
+    await this.redis.srem('blackbox:batteries:index', batteryId);
+  }
 }

@@ -10,18 +10,33 @@ export async function POST(req: NextRequest) {
     const seed = String(body.seed || `bench-${Date.now()}`);
     const PRESET_MAP: Record<string, ArchetypeId> = {
       'prob-1': 'POISON_PILL_PANIC',
-      'prob-2': 'POISON_PILL_PANIC',
+      'prob-2': 'AUTH_TOKEN_ROTATION_DESYNC',
       'prob-3': 'LOST_UPDATE_CONCURRENCY',
-      'prob-4': 'LOST_UPDATE_CONCURRENCY',
-      'prob-5': 'TIMEOUT_POOL_STARVATION',
-      'prob-6': 'TIMEOUT_POOL_STARVATION',
-      'prob-7': 'AUTH_TOKEN_ROTATION_DESYNC',
-      'prob-8': 'AUTH_TOKEN_ROTATION_DESYNC',
+      'prob-4': 'TIMEOUT_POOL_STARVATION',
+      'prob-5': 'CACHE_STAMPEDE_THUNDERING_HERD',
+      'prob-6': 'MEMORY_LEAK_OOM_CASCADE',
+      'prob-7': 'DISTRIBUTED_SAGA_DEADLOCK',
+      'prob-8': 'CLOCK_SKEW_BYZANTINE_DRIFT',
+      'prob-9': 'SPLIT_BRAIN_PARTITION',
+      'prob-10': 'SCHEMA_REGISTRY_DRIFT',
     };
+
+    const validArchetypeIds: ArchetypeId[] = [
+      'POISON_PILL_PANIC',
+      'AUTH_TOKEN_ROTATION_DESYNC',
+      'LOST_UPDATE_CONCURRENCY',
+      'TIMEOUT_POOL_STARVATION',
+      'CACHE_STAMPEDE_THUNDERING_HERD',
+      'MEMORY_LEAK_OOM_CASCADE',
+      'DISTRIBUTED_SAGA_DEADLOCK',
+      'CLOCK_SKEW_BYZANTINE_DRIFT',
+      'SPLIT_BRAIN_PARTITION',
+      'SCHEMA_REGISTRY_DRIFT',
+    ];
 
     const presetKey = body.problem_preset || body.archetype_id || '';
     const archetypeId = PRESET_MAP[presetKey] ||
-      (['POISON_PILL_PANIC', 'LOST_UPDATE_CONCURRENCY', 'TIMEOUT_POOL_STARVATION', 'AUTH_TOKEN_ROTATION_DESYNC'].includes(body.archetype_id)
+      (validArchetypeIds.includes(body.archetype_id)
         ? (body.archetype_id as ArchetypeId)
         : undefined);
 

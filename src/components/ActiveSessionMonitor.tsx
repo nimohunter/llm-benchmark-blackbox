@@ -24,15 +24,9 @@ export const ActiveSessionMonitor: React.FC<ActiveSessionMonitorProps> = ({
         const res = await fetch(`/api/battery/${sessionId}/status`);
         const resJson = await res.json();
         if (resJson.success && resJson.battery) {
-          setData(resJson.battery);
-          if (resJson.battery.currentSessionId) {
-            try {
-              const sessRes = await fetch(`/api/session/${resJson.battery.currentSessionId}/replay`);
-              const sessJson = await sessRes.json();
-              if (sessJson.success && sessJson.services && onSessionUpdated) {
-                onSessionUpdated(sessJson);
-              }
-            } catch {}
+          setData({ ...resJson.battery, current_session: resJson.current_session });
+          if (resJson.current_session?.services && onSessionUpdated) {
+            onSessionUpdated({ services: resJson.current_session.services });
           }
           if (resJson.battery.status !== 'IN_PROGRESS') {
             setPolling(false);
@@ -149,6 +143,61 @@ export const ActiveSessionMonitor: React.FC<ActiveSessionMonitorProps> = ({
             })}
           </div>
         </div>
+
+        {/* Live Active Level Stats & Action Stream */}
+        {battery.status === 'IN_PROGRESS' && battery.current_session && (
+          <div className="mb-6 pt-4 border-t border-zinc-800">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-mono font-medium text-indigo-300 flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                Active Level Telemetry: Turn {battery.current_session.currentTurn} / 25
+              </span>
+              <span className="text-xs font-mono text-zinc-400">
+                Budget: <span className="font-bold text-amber-400">{battery.current_session.budgetRemaining}</span> / 100
+              </span>
+            </div>
+
+            <div className="p-3 rounded-lg bg-zinc-900/80 border border-zinc-800">
+              <h5 className="text-[11px] font-mono text-zinc-400 mb-2 flex items-center justify-between">
+                <span>Real-Time Agent Actions (Level {battery.currentLevel})</span>
+                <span className="text-zinc-500">{battery.current_session.trajectory?.length || 0} turns taken</span>
+              </h5>
+
+              {(!battery.current_session.trajectory || battery.current_session.trajectory.length === 0) ? (
+                <div className="text-center py-3 text-xs font-mono text-zinc-500">
+                  Model is inspecting brief... Awaiting first probe or remediation call.
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {battery.current_session.trajectory.slice().reverse().map((turn: any) => (
+                    <div
+                      key={turn.turn}
+                      className="p-2 rounded bg-zinc-950/70 border border-zinc-800 text-xs font-mono flex items-start justify-between"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-bold text-zinc-200">Turn {turn.turn}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-indigo-300 uppercase">
+                            {turn.actionType}
+                          </span>
+                          <span className="text-[10px] text-zinc-500">
+                            {new Date(turn.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-zinc-400 truncate max-w-lg">
+                          {JSON.stringify(turn.input)}
+                        </div>
+                      </div>
+                      <div className="text-right text-[11px] text-zinc-500 shrink-0">
+                        {turn.budgetRemaining} pts left
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Completed Level Breakdown */}
         {battery.results && battery.results.length > 0 && (

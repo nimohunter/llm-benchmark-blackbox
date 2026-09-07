@@ -10,14 +10,15 @@ export async function POST(req: NextRequest) {
 
     const origin = req.nextUrl.origin || 'http://localhost:3000';
 
-    const masterPrompt = `You are taking the BlackBox-Ops 8-Level Survival Ladder Examination.
-You must autonomously climb through 8 ascending difficulty engineering levels (Level 1 Easy to Level 8 Nightmare).
+    const totalLevels = battery.totalLevels || 10;
+    const masterPrompt = `You are taking the BlackBox-Ops ${totalLevels}-Level Grandmaster Survival Ladder Examination.
+You must autonomously climb through ${totalLevels} ascending difficulty engineering levels (Level 1 Easy to Level ${totalLevels} Nightmare Boss).
 Early Termination Rule: If you fail to resolve any level or trigger a destructive regression, you are knocked out immediately!
 
 Exam Details:
 • Battery ID: ${battery.batteryId}
 • Target API: ${origin}
-• Total Levels: 8 (L1: Queue Deserialization -> L8: Silent Ledger Drift)
+• Total Levels: ${totalLevels} (L1: Queue Deserialization -> L${totalLevels}: Silent Schema Drift & Ledger Poisoning)
 
 RULES OF ENGAGEMENT & INTEGRITY POLICY:
 • All interactions must strictly occur via the provided /api/battery/* and /api/agent/* REST endpoints.
@@ -41,13 +42,13 @@ EXAMINATION PROTOCOL:
    {
      "session_id": "<current_session_id>",
      "root_cause_service": "gateway"|"queue"|"worker"|"db"|"external",
-     "failure_category": "<concise incident category: e.g. POISON_PILL, CONCURRENCY_RACE, TIMEOUT_STARVATION, or AUTH_DESYNC>",
+     "failure_category": "<concise incident category>",
      "triggering_condition": "<concise explanation of bug trigger>"
    }
 
 4. AUTOMATIC HANDOFF:
    The /advance response will score your level and AUTOMATICALLY return the brief and session_id for the next level!
-   Continue until all 8 levels are cleared.
+   Continue until all ${totalLevels} levels are cleared.
 
 Begin now by fetching Level 1 via GET ${origin}/api/battery/${battery.batteryId}/current`;
 

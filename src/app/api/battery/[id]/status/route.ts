@@ -17,9 +17,28 @@ export async function GET(
       );
     }
 
+    let currentSession = null;
+    if (battery.currentSessionId) {
+      const { getStorage } = await import('@/lib/storage');
+      const storage = getStorage();
+      currentSession = await storage.getSession(battery.currentSessionId);
+    }
+
     return NextResponse.json({
       success: true,
       battery,
+      current_session: currentSession
+        ? {
+            sessionId: currentSession.sessionId,
+            currentTurn: currentSession.currentTurn,
+            budgetRemaining: currentSession.budgetRemaining,
+            solved: currentSession.solved,
+            services: currentSession.state?.services,
+            logs: currentSession.state?.logs?.slice(-30),
+            trajectory: currentSession.trajectory || [],
+            activeIncident: currentSession.state?.activeIncident,
+          }
+        : null,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
