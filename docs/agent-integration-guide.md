@@ -10,7 +10,7 @@ The repository includes a ready-to-run evaluation runner: [`evaluate.py`](../eva
 
 ### Running the Standard Battery
 ```bash
-# Evaluate a model on the 8-Level Standard Battery
+# Evaluate a model on the 10-Level Grandmaster Battery
 python3 evaluate.py --model "Claude-Opus-5" --suite standard
 ```
 
@@ -79,7 +79,21 @@ BlackBox-Ops exposes standard HTTP REST endpoints that map directly to agent too
       "type": "object",
       "properties": {
         "root_cause_service": { "type": "string" },
-        "failure_category": { "type": "string" },
+        "failure_category": { 
+          "type": "string", 
+          "enum": [
+            "POISON_PILL_PANIC",
+            "AUTH_TOKEN_ROTATION_DESYNC",
+            "LOST_UPDATE_CONCURRENCY",
+            "TIMEOUT_POOL_STARVATION",
+            "CACHE_STAMPEDE_THUNDERING_HERD",
+            "MEMORY_LEAK_OOM_CASCADE",
+            "DISTRIBUTED_SAGA_DEADLOCK",
+            "CLOCK_SKEW_BYZANTINE_DRIFT",
+            "SPLIT_BRAIN_PARTITION",
+            "SCHEMA_REGISTRY_DRIFT"
+          ] 
+        },
         "triggering_condition": { "type": "string" }
       },
       "required": ["root_cause_service", "failure_category", "triggering_condition"]
@@ -101,7 +115,7 @@ def run_ladder_exam(model_name="My-Custom-Agent"):
     # 1. Initialize Battery
     res = requests.post(f"{BASE_URL}/api/battery/create", json={"model_name": model_name}).json()
     battery_id = res["battery_id"]
-    print(f"Started 8-Level Exam: {battery_id}")
+    print(f"Started 10-Level Exam: {battery_id}")
 
     while True:
         # 2. Get current level brief
@@ -111,7 +125,8 @@ def run_ladder_exam(model_name="My-Custom-Agent"):
             
         session_id = curr["current_session_id"]
         level = curr["current_level"]
-        print(f"\n--- Entering Level {level}: {curr['level_config']['name']} ---")
+        print(f"
+--- Entering Level {level}: {curr['level_config']['name']} ---")
 
         # 3. Agent probes logs
         logs = requests.post(f"{BASE_URL}/api/agent/probe", json={
@@ -146,7 +161,7 @@ def run_ladder_exam(model_name="My-Custom-Agent"):
             print(f"Exam concluded: {adv.get('message')}")
             break
         elif adv.get("status") == "BATTERY_COMPLETED":
-            print("🏆 Grandmaster SRE Certified! All 8 levels cleared!")
+            print("🏆 Grandmaster SRE Certified! All 10 levels cleared!")
             break
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@
 
 1. [Why BlackBox-Ops?](#1-why-blackbox-ops)
 2. [Core Benchmark Principles](#2-core-benchmark-principles)
-3. [The 8-Level Survival Ladder (The One-Prompt Master Exam)](#3-the-8-level-survival-ladder-the-one-prompt-master-exam)
+3. [The 10-Level Grandmaster Survival Ladder (The One-Prompt Master Exam)](#3-the-10-level-grandmaster-survival-ladder-the-one-prompt-master-exam)
 4. [Simulated System Architecture (5-Node Mesh)](#4-simulated-system-architecture-5-node-mesh)
 5. [The Three Roles of the Deterministic Seed](#5-the-three-roles-of-the-deterministic-seed)
 6. [Multi-Dimensional Scoring Engine (0–1000 Points)](#6-multi-dimensional-scoring-engine-01000-points)
@@ -23,7 +23,7 @@
 9. [Agent REST API & Tool Catalog](#9-agent-rest-api--tool-catalog)
 10. [Quickstart & Installation](#10-quickstart--installation)
 11. [How to Benchmark a Model](#11-how-to-benchmark-a-model)
-12. [Web UI & Mission Control Platform](#12-web-ui--mission-control-platform)
+12. [Web UI, Mission Control & Online Live Arena (`/live`)](#12-web-ui-mission-control--online-live-arena-live)
 13. [Repository Structure](#13-repository-structure)
 14. [Documentation Index (`docs/`)](#14-documentation-index-docs)
 15. [License](#15-license)
@@ -58,35 +58,41 @@ Most current LLM coding benchmarks evaluate models on toy tasks:
 
 ---
 
-## 3. The 8-Level Survival Ladder (The One-Prompt Master Exam)
+## 3. The 10-Level Grandmaster Survival Ladder (The One-Prompt Master Exam)
 
-Rather than requiring human testers to manage 8 separate prompts or disjointed chats, BlackBox-Ops introduces the **One-Prompt 8-Level Survival Ladder**.
+Rather than requiring human testers to manage 10 separate prompts or disjointed chats, BlackBox-Ops introduces the **One-Prompt 10-Level Grandmaster Survival Ladder**.
 
 ```
-[Level 1: Queue Deserialization Panic (Tier 1)]
+[Level 1: Queue Deserialization Panic (Tier 1 - Queue)]
        │ (Pass)
        ▼
-[Level 2: Ops Vault Token Rotation Desync (Tier 2)]
+[Level 2: Ops Vault Token Rotation Desync (Tier 2 - Ops)]
        │ (Pass)
        ▼
-[Level 3: Queue Poison Pill & Red-Herring Cascade (Tier 2)]
+[Level 3: Storage Concurrency Lost Update (Tier 2 - Storage)]
        │ (Pass)
        ▼
-[Level 4: Network Timeout & DB Pool Starvation (Tier 2)]
+[Level 4: Network Cascading Timeout & DB Starvation (Tier 2 - Network)]
        │ (Pass)
        ▼
-[Level 5: Storage Concurrency Lost Update (Tier 2)]
+[Level 5: Cache Thundering Herd & Cache Stampede (Tier 3 - Cache)]
        │ (Pass)
        ▼
-[Level 6: Network Cascading Lock Leak (Tier 3)]
+[Level 6: Runtime Memory Leak & Stop-The-World GC (Tier 3 - Runtime)]
        │ (Pass)
        ▼
-[Level 7: Ops Secret Desync & Partner Lockout (Tier 3)]
+[Level 7: Storage Distributed Saga Circular Deadlock (Tier 3 - Storage)]
        │ (Pass)
        ▼
-[Level 8: Storage Silent Ledger Invariant Drift (Nightmare Boss)]
+[Level 8: Ops Byzantine NTP Clock Skew & Token Drift (Tier 4 - Ops)]
+       │ (Pass)
+       ▼
+[Level 9: Consensus Split-Brain Quorum Partition (Tier 4 - Consensus)]
+       │ (Pass)
+       ▼
+[Level 10: Data Silent Schema Registry Drift & Invariant Poisoning (Grandmaster Boss)]
        │
-       ├─ Pass all 8 ───────────► 🏆 GRANDMASTER SRE (0–1000 pts)
+       ├─ Pass all 10 ──────────► 🏆 GRANDMASTER SRE (0–1000 pts)
        └─ Fail any level (X) ──► ☠️ EARLY TERMINATION (Knocked out at Level X)
 ```
 
@@ -95,18 +101,20 @@ Rather than requiring human testers to manage 8 separate prompts or disjointed c
 | Level | Inherent Tier | Domain | Scenario Name | Seed | Core Competency & Knockout Check |
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | **L1** | **Tier 1 (Easy)** | Queue | **Deserialization Panic** | `std-seed-q1-easy` | Explicit worker stack trace; missing currency key fallback. |
-| **L2** | **Tier 1.5 (Easy+)** | Ops | **Vault Token Rotation Desync** | `std-seed-o7-med` | Stale auth token cached in gateway memory; flush auth cache. |
-| **L3** | **Tier 2 (Medium)** | Queue | **Poison Pill & Distractor** | `bench-prod-402` | Head-of-line blocking + external 503 red herring; route to DLQ. |
+| **L2** | **Tier 2 (Medium)** | Ops | **Vault Token Rotation Desync** | `std-seed-o7-med` | Stale auth token cached in gateway memory; flush auth cache. |
+| **L3** | **Tier 2 (Medium)** | Storage | **Concurrency Lost Update** | `std-seed-s3-med` | Flash sale race condition; enable optimistic concurrency locking. |
 | **L4** | **Tier 2 (Medium)** | Network | **Timeout & DB Starvation** | `std-seed-n5-med` | Slow partner holds DB locks; configure client HTTP timeouts. |
-| **L5** | **Tier 2.5 (Med+)** | Storage | **Concurrency Lost Update** | `std-seed-s3-med` | Flash sale race condition; enable optimistic concurrency locking. |
-| **L6** | **Tier 3 (Hard)** | Network | **Cascading Lock Leak** | `std-seed-n6-hard` | Cascading multi-service outage; decouple partner calls from DB tx. |
-| **L7** | **Tier 3 (Hard)** | Ops | **Secret Desync & Lockout** | `std-seed-o8-hard` | High-concurrency silent 401s; establish token refresh TTL loop. |
-| **L8** | **Tier 3.5 (Boss)** | Storage | **Silent Ledger Invariant Drift** | `std-seed-s4-hard` | **200 OK with zero crash logs**; reconcile hidden ledger balance drift. |
+| **L5** | **Tier 3 (Hard)** | Cache | **Cache Stampede & Thundering Herd** | `std-seed-c5-hard` | Hot key TTL expiry slams DB. Avoid restarting DB; enable singleflight mutex. |
+| **L6** | **Tier 3 (Hard)** | Runtime | **Memory Leak & Stop-The-World GC** | `std-seed-r6-hard` | Unbounded WebSocket listeners cause 8.5s GC pauses; cap listeners & restart. |
+| **L7** | **Tier 3 (Hard)** | Storage | **Distributed Saga Deadlock** | `std-seed-d7-hard` | Circular lock wait graph freezes pipeline; enable deadlock detection. |
+| **L8** | **Tier 4 (Nightmare)**| Ops | **Byzantine NTP Clock Skew** | `std-seed-b8-nightmare` | Asymmetric node clock drift causes 401 spikes. Avoid key rotation; tune skew window & sync NTP. |
+| **L9** | **Tier 4 (Nightmare)**| Consensus | **Split-Brain Quorum Partition** | `std-seed-p9-nightmare` | Asymmetric network partition creates dual leaders; enforce fencing tokens & quorum. |
+| **L10**| **Tier 4 (Boss)** | Data | **Silent Schema Registry Drift** | `std-seed-x10-nightmare-boss` | **100% HTTP 200 OK with zero crash logs**; reconcile $1.4M hidden ledger drift. |
 
 ### Ladder Mechanics:
 1. **One Master Prompt**: The tester pastes a single prompt into Claude, ChatGPT, or Gemini.
 2. **Autonomous Progression**: When the agent resolves Level $N$ and calls `/advance`, the server evaluates the RCA, grades the level, and **automatically returns the incident brief and session for Level $N+1$ in that exact response**.
-3. **Fail-Fast Early Termination**: If the model triggers a catastrophic regression, exhausts its budget, or fails to recover the service, the exam concludes immediately (`KNOCKED_OUT`). Weak models are prevented from wasting token budgets on levels they cannot reach.
+3. **Fail-Fast Early Termination**: If the model triggers a catastrophic blast-radius regression, exhausts its budget, or fails to recover the service, the exam concludes immediately (`KNOCKED_OUT`). Weak models are prevented from wasting token budgets on levels they cannot reach.
 
 ---
 
@@ -132,7 +140,7 @@ The serverless simulator emulates a distributed e-commerce / financial ledger pi
 2. **Event Queue (`queue`)**: Asynchronous message broker with head-of-line blocking, dead-letter queuing (DLQ), and retry counters.
 3. **Worker Service (`worker`)**: Consumer processing financial payloads, deserializing JSON events, and executing transaction settlement.
 4. **External Partner (`external`)**: Simulated third-party payment gateways and shipping partners with realistic `429 Too Many Requests`, `503 Service Unavailable`, and `401 Unauthorized` fault injections.
-5. **Audit Ledger DB (`db`)**: Relational transaction store tracking account balances, connection pool occupancy (`max_pool: 100`), and transaction locks.
+5. **Audit Ledger DB (`db`)**: Relational transaction store tracking account balances, connection pool occupancy (`max_pool: 100`), consensus quorum, and transaction locks.
 
 ### Turn-Based Batch Traffic Simulation
 * State advances on every agent action.
@@ -146,15 +154,15 @@ The serverless simulator emulates a distributed e-commerce / financial ledger pi
 The `seed` string is the cryptographic DNA of each incident simulation:
 1. **Apples-to-Apples Reproducibility ($N=1$)**: When Model A and Model B run `seed="std-seed-q1-easy"`, both encounter the identical message queue depth, identical transaction timestamps, and identical distractor error logs.
 2. **Anti-Cheat Procedural Generation**: Error IDs (e.g. `msg-8288-corrupt`), customer account numbers, and token hashes are procedurally derived from the seed, preventing models from memorizing static strings.
-3. **Standard Battery Mapping**: Certified seeds directly index the official 8 benchmark problems.
+3. **Standard Battery Mapping**: Certified seeds directly index the official 10 benchmark problems.
 
 ---
 
 ## 6. Multi-Dimensional Scoring Engine (0–1000 Points)
 
-Every problem is evaluated on a continuous 4-axis grading rubic:
+Every problem is evaluated on a continuous 4-axis grading rubric:
 
-$$\text{Total Score} = S_{\text{recovery}} (400) + S_{\text{rca}} (250) + S_{\text{safety}} (200) + S_{\text{efficiency}} (150)$$
+$$	ext{Total Score} = S_{	ext{recovery}} (400) + S_{	ext{rca}} (250) + S_{	ext{safety}} (200) + S_{	ext{efficiency}} (150)$$
 
 ```
 ┌───────────────────────────┬────────────────────────┬──────────────────────┬───────────────────────┐
@@ -169,7 +177,7 @@ $$\text{Total Score} = S_{\text{recovery}} (400) + S_{\text{rca}} (250) + S_{\te
 ```
 
 ### Deterministic, Zero-LLM-as-a-Judge Evaluation
-* Root Cause Analysis (RCA) is evaluated via exact enum matches (`POISON_PILL_PANIC`, `LOST_UPDATE_CONCURRENCY`, `TIMEOUT_POOL_STARVATION`, `AUTH_TOKEN_ROTATION_DESYNC`) and deterministic trigger regex assertions.
+* Root Cause Analysis (RCA) is evaluated via certified enum matches across the 10 failure archetypes and deterministic trigger assertions.
 * **100% Objective & Instant**: Zero evaluation variance, zero external LLM API grading costs.
 
 ### Metric Normalization Rule
@@ -203,7 +211,7 @@ BlackBox-Ops implements a rigorous, multi-layered **Defense-in-Depth Anti-Cheat 
 ```
 
 ### Layer 1: Zero-Knowledge Client Bundles
-* **Strict Runtime Isolation**: Internal archetype enum keys (`POISON_PILL_PANIC`, `LOST_UPDATE_CONCURRENCY`, `TIMEOUT_POOL_STARVATION`, `AUTH_TOKEN_ROTATION_DESYNC`) and ground-truth validation rules are completely stripped from all client components (`'use client'`).
+* **Strict Runtime Isolation**: Internal archetype enum keys and ground-truth validation rules are completely stripped from all client components (`'use client'`).
 * **Server-Side Preset Resolution**: The evaluation kit UI submits abstract preset IDs (`problem_preset: 'prob-1'`). All archetype lookups and scenario configurations occur strictly on the backend in `/api/session/create`.
 * **Sanitized Leaderboard Feed**: The leaderboard API only transmits high-level display metadata (`domain: "Queue"`, `scenarioName: "Poison Pill Panic"`), preventing agents from learning internal enum strings via public feeds.
 
@@ -225,7 +233,7 @@ BlackBox-Ops implements a rigorous, multi-layered **Defense-in-Depth Anti-Cheat 
   * Score is permanently zeroed: **0 / 1000** (`recovery: 0`, `rca: 0`, `safety: 0`, `efficiency: 0`).
   * Session status is set to `DISQUALIFIED_CHEATING`.
   * The model is permanently tagged on the public leaderboard with a `[DISQUALIFIED: CHEATING]` label.
-  * In the 8-Level Ladder, the battery is immediately terminated via fail-fast knockout.
+  * In the 10-Level Ladder, the battery is immediately terminated via fail-fast knockout.
 
 ### Layer 4: Semantic RCA Normalization
 * Legitimate SRE evaluation requires reasoning, not proprietary keyword guessing. The RCA scoring engine normalizes responses and accepts semantic category descriptions (e.g. `"concurrency race condition"` or `"poison pill deserialization"`), eliminating the need for models to guess or scrape internal enum strings while strictly penalizing out-of-band cheating.
@@ -236,32 +244,32 @@ BlackBox-Ops implements a rigorous, multi-layered **Defense-in-Depth Anti-Cheat 
 
 To maintain strict fairness, rankings are separated into two divisions:
 
-### Division 1: 👑 Official 8-Level Survival Ladder (The Championship Board)
-* Models must take the continuous 8-level survival exam.
-* Ranked by **Levels Cleared** first (`8/8 Cleared 🏆` $\to$ `Level 6/8` $\to$ `Level 3/8`), followed by **Composite Score** and **Turn Economy**.
+### Division 1: 👑 Official 10-Level Grandmaster Survival Ladder (The Championship Board)
+* Models must take the continuous 10-level survival exam.
+* Ranked by **Levels Cleared** first (`10/10 Cleared 🏆` $	o$ `Level 6/10` $	o$ `Level 3/10`), followed by **Composite Score** and **Turn Economy**.
 
 ### Division 2: 🎯 Single Problem Practice Drills
 * Records isolated, single-problem runs for ablation studies.
-* Filterable by domain: `QUEUE`, `STORAGE`, `NETWORK`, `OPS`.
+* Filterable across all 8 domains: `QUEUE`, `OPS`, `STORAGE`, `NETWORK`, `CACHE`, `RUNTIME`, `CONSENSUS`, `DATA`.
 
 ### Empirical Baseline Results
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  👑 DIVISION 1: OFFICIAL 8-LEVEL SURVIVAL LADDER                                                       │
+│  👑 DIVISION 1: OFFICIAL 10-LEVEL GRANDMASTER SURVIVAL LADDER                                          │
 ├──────┬────────────────────────────────┬────────────────┬───────────┬────────────────────┬──────────────┤
 │ Rank │ Model Name                     │ Levels Cleared │ Score     │ Status             │ Total Turns  │
 ├──────┼────────────────────────────────┼────────────────┼───────────┼────────────────────┼──────────────┤
-│ 🥇 #1│ Claude Sonnet 5 medium [L3/8]  │ Level 3/8      │ 384 / 1000│ Knocked Out @ L4   │ 23 turns     │
+│ 🥇 #1│ Claude Sonnet 5 medium [L3/10] │ Level 3/10     │ 307 / 1000│ Knocked Out @ L4   │ 23 turns     │
 └──────┴────────────────────────────────┴────────────────┴───────────┴────────────────────┴──────────────┘
 ```
 
 #### Claude Sonnet 5 medium Level Breakdown:
-* **Composite Score**: **384 / 1000** (scaled across all 8 exam levels: $(980 + 965 + 896 + 230 + 0 + 0 + 0 + 0) / 8 = 384$)
+* **Composite Score**: **307 / 1000** (scaled across all 10 exam levels: $(980 + 965 + 896 + 230 + 0 	imes 6) / 10 = 307$)
 * **Level 1** (`Queue: Deserialization Panic`): **CLEARED ✅** | Score: **980 / 1000** (4 turns)
 * **Level 2** (`Ops: Vault Token Rotation Desync`): **CLEARED ✅** | Score: **965 / 1000** (5 turns)
-* **Level 3** (`Queue: Poison Pill & Red-Herring`): **CLEARED ✅** | Score: **896 / 1000** (8 turns)
-* **Level 4** (`Network: Timeout & DB Starvation`): **KNOCKED OUT ❌** | Score: **230 / 1000** (6 turns — pool exhaustion)
+* **Level 3** (`Storage: Concurrency Lost Update`): **CLEARED ✅** | Score: **896 / 1000** (8 turns)
+* **Level 4** (`Network: Cascading Timeout & DB Starvation`): **KNOCKED OUT ❌** | Score: **230 / 1000** (6 turns — pool exhaustion)
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -269,8 +277,8 @@ To maintain strict fairness, rankings are separated into two divisions:
 ├──────┬────────────────────────────────┬───────────────────────────────┬──────┬───────────┬─────────────┤
 │ Rank │ Model Name                     │ Scenario                      │ Tier │ Score     │ Turns Used  │
 ├──────┼────────────────────────────────┼───────────────────────────────┼──────┼───────────┼─────────────┤
-│ 🥇 #1│ Claude Opus 5                  │ Queue: Poison Pill & Distractor│ T2   │ 924 / 1000│ 17 turns    │
-│ 🥈 #2│ Claude Sonnet 5 medium         │ Queue: Poison Pill & Distractor│ T2   │ 896 / 1000│ 8 turns     │
+│ 🥇 #1│ Claude Opus 5                  │ Queue: Poison Pill & Distract │ T2   │ 924 / 1000│ 17 turns    │
+│ 🥈 #2│ Claude Sonnet 5 medium         │ Queue: Poison Pill & Distract │ T2   │ 896 / 1000│ 8 turns     │
 └──────┴────────────────────────────────┴───────────────────────────────┴──────┴───────────┴─────────────┘
 ```
 
@@ -278,13 +286,13 @@ To maintain strict fairness, rankings are separated into two divisions:
 
 ## 9. Agent REST API & Tool Catalog
 
-### A. 8-Level Survival Battery Lifecycle
-* **`POST /api/battery/create`**: Generates a new 8-level exam battery and master prompt.
+### A. 10-Level Grandmaster Battery Lifecycle
+* **`POST /api/battery/create`**: Generates a new 10-level exam battery and master prompt.
   * Body: `{"model_name": "Claude-Opus-5"}`
-  * Returns: `{ "battery_id": "bat-xxx", "total_levels": 8, "master_prompt": "..." }`
+  * Returns: `{ "battery_id": "bat-xxx", "total_levels": 10, "master_prompt": "..." }`
 * **`GET /api/battery/{id}/current`**: Returns current level index, active session ID, and problem brief.
 * **`POST /api/battery/{id}/advance`**: Grades active level RCA. If passed, automatically returns Level $N+1$ brief; if failed, triggers knockout.
-* **`GET /api/battery/{id}/status`**: Returns live ladder progress, levels cleared, and level history.
+* **`GET /api/battery/{id}/status`**: Returns live ladder progress, levels cleared, current in-flight session turns, and level history.
 
 ### B. Incident Investigation & Action Endpoints
 * **`GET /api/agent/brief/{session_id}`**: Fetches alert synopsis, topology, and allowed tools.
@@ -296,8 +304,8 @@ To maintain strict fairness, rankings are separated into two divisions:
   * `ping_service`: Latency and health check per node.
 * **`POST /api/agent/dryrun`**: Executes a typed remediation in an isolated staging sandbox. Returns detected regressions and side effects before production commit.
 * **`POST /api/agent/apply`**: Deploys typed remediation to live production:
-  * `CONFIG_UPDATE`: `{"key": "db.pool_size", "value": 200}`
-  * `SERVICE_ACTION`: `{"action": "REQUEUE_DLQ" | "RESTART_WORKER" | "FLUSH_AUTH_CACHE"}`
+  * `CONFIG_UPDATE`: `{"key": "cache.singleflight_mutex", "value": true}`
+  * `SERVICE_ACTION`: `{"action": "REQUEUE_DLQ" | "RESTART_WORKER" | "FLUSH_AUTH_CACHE" | "PREWARM_HOT_KEYS"}`
   * `RUN_SQL`: `UPDATE ledger SET balance = balance + 10 WHERE id = 42;`
 * **`POST /api/agent/finish`**: Submits final RCA for single practice sessions.
 
@@ -330,17 +338,17 @@ The BlackBox-Ops Mission Control platform will be running at **`http://localhost
 
 ## 11. How to Benchmark a Model
 
-### Method 1: The One-Prompt Master Exam (Web UI)
-1. Open **`http://localhost:3000`**.
-2. Under **Model Evaluation Kit**, click **`🏆 8-Level Survival Exam`**.
-3. Type the model name (e.g. `Claude-Opus-5`, `GPT-4o`, `Gemini-3.8`).
-4. Click **`[ ▶ Generate 8-Level Exam Prompt ]`**.
+### Method 1: The One-Prompt Grandmaster Exam (Web UI)
+1. Open **`http://localhost:3000`** (or the hosted production URL).
+2. Under **Model Evaluation Kit**, click **`🏆 10-Level Grandmaster Exam`**.
+3. Type the model name (e.g. `Claude-Opus-5`, `GPT-4o`, `Gemini-Pro-3.1`).
+4. Click **`[ ▶ Generate 10-Level Exam Prompt ]`**.
 5. Copy the generated master prompt and paste it into the LLM chat.
-6. The model will autonomously solve Level 1, call `/advance`, automatically receive Level 2 in the same chat, and climb through all 8 levels until completion or knockout!
+6. The model autonomously solves Level 1, calls `/advance`, automatically receives Level 2 in the same chat, and climbs through all 10 levels until completion or knockout!
 
 ### Method 2: Single Problem Practice Drill
 1. Under **Model Evaluation Kit**, select **`🎯 Single Problem Practice`**.
-2. Pick any scenario (`Problem #1` to `Problem #8`), select tier, and copy the isolated prompt.
+2. Pick any scenario (`Problem #1` through `Problem #10`), select tier, and copy the isolated prompt.
 
 ### Method 3: Automated CLI Runner (Python)
 Run unattended benchmark sweeps via CLI:
@@ -350,14 +358,20 @@ python3 evaluate.py --model "Claude-Opus-5" --suite standard
 
 ---
 
-## 12. Web UI & Mission Control Platform
+## 12. Web UI, Mission Control & Online Live Arena (`/live`)
 
 Built with **Next.js 16 (Turbopack)**, **Tailwind CSS v4**, and **Lucide Icons**:
 
-* **Active Model Fleet Observer**: Real-time HUD showing all models currently taking exams. Includes automatic 10-minute abandoned agent cleanup and manual dismissal.
-* **Live 5-Node Topology Mesh**: Dynamic SVG architecture topology displaying live queue depth, worker threads, DB connection pools, and latency. Dynamically binds to whichever active model is selected.
-* **Turn Replay Scrubber**: VCR-style audit player with **Auto-Replay** (Play/Pause, 1x/2x/4x speed controls), before/after state diffs, and multi-level ladder filtering ribbons.
-* **Two-Division Leaderboard**: Separated tabs with domain filter pills (`QUEUE`, `STORAGE`, `NETWORK`, `OPS`) and URL hash persistence (`#leaderboard`).
+* **Dedicated Online Live Task Arena (`/live`)**:
+  * **Global Spectator Mode**: Anyone can watch models taking live benchmark exams in real-time from anywhere in the world.
+  * **Real-Time Fleet Selector**: Switch between concurrently active model test fleets with zero latency.
+  * **Dynamic 5-Node Architecture Radar**: Live animated SVG mesh showing real-time health dials, connection pool saturation, latency, and queue depths.
+  * **Live Streaming Action Terminal**: Auto-scrolling HUD streaming agent commands (`probe`, `dryrun`, `apply`, `advance`) with syntax highlighting and turn counters.
+  * **Tab Visibility Throttling**: Pauses network polling when the tab is hidden (`document.visibilityState === 'hidden'`) to conserve bandwidth and edge compute.
+* **Mission Control Platform (`/`)**:
+  * **Active Model Fleet Observer**: Real-time HUD showing all models taking exams with automatic 10-minute abandoned agent cleanup and manual dismissal.
+  * **Turn Replay Scrubber**: VCR-style audit player with **Auto-Replay** (Play/Pause, 1x/2x/4x speed controls), before/after state diffs, and multi-level ladder filtering ribbons.
+  * **Two-Division Leaderboard**: Separated tabs with domain filter pills (`QUEUE`, `OPS`, `STORAGE`, `NETWORK`, `CACHE`, `RUNTIME`, `CONSENSUS`, `DATA`) and URL hash persistence (`#leaderboard`).
 
 ---
 
@@ -366,7 +380,7 @@ Built with **Next.js 16 (Turbopack)**, **Tailwind CSS v4**, and **Lucide Icons**
 ```
 blackbox/
 ├── docs/                               # In-depth technical specifications
-│   ├── incident-archetypes.md          # 4 failure modes: state machines & triggers
+│   ├── incident-archetypes.md          # 10 failure modes: state machines & triggers
 │   ├── api-reference.md                # Comprehensive REST API & schema reference
 │   ├── scoring-and-methodology.md      # Mathematical scoring rubrics & proofs
 │   └── agent-integration-guide.md      # Integration guide (LangChain, AutoGen, CLI)
@@ -374,9 +388,11 @@ blackbox/
 │   ├── app/                            # Next.js App Router
 │   │   ├── api/
 │   │   │   ├── agent/                  # Diagnostic endpoints (probe, dryrun, apply)
-│   │   │   ├── battery/                # 8-level ladder lifecycle (create, advance, status)
+│   │   │   ├── battery/                # 10-level ladder lifecycle (create, advance, status)
 │   │   │   ├── session/                # Session creation, active fleet, audit replay
 │   │   │   └── leaderboard/            # Multi-division leaderboard API
+│   │   ├── live/
+│   │   │   └── page.tsx                # Dedicated Online Live Task Spectator Arena
 │   │   └── page.tsx                    # Mission Control & Platform Frontend
 │   ├── components/                     # React UI components
 │   │   ├── ActiveSessionMonitor.tsx    # Live telemetry & ladder progress HUD
@@ -386,13 +402,24 @@ blackbox/
 │   │   └── TopologyMap.tsx             # 5-node distributed architecture mesh
 │   └── lib/
 │       ├── engine/                     # Benchmark Simulation Engine
-│       │   ├── archetypes/             # Poison Pill, Lost Update, Timeout, Desync
-│       │   ├── battery.ts              # 8-Level ladder state machine & disk sync
+│       │   ├── archetypes/             # 10 incident failure archetypes
+│       │   │   ├── base.ts             # Base archetype interface
+│       │   │   ├── poison-pill.ts      # Level 1 (Queue)
+│       │   │   ├── token-desync.ts     # Level 2 (Ops)
+│       │   │   ├── lost-update.ts      # Level 3 (Storage)
+│       │   │   ├── timeout-starvation.ts # Level 4 (Network)
+│       │   │   ├── cache-stampede.ts   # Level 5 (Cache)
+│       │   │   ├── memory-leak.ts      # Level 6 (Runtime)
+│       │   │   ├── saga-deadlock.ts    # Level 7 (Storage)
+│       │   │   ├── clock-skew.ts       # Level 8 (Ops)
+│       │   │   ├── split-brain.ts      # Level 9 (Consensus)
+│       │   │   └── schema-drift.ts     # Level 10 (Data Boss)
+│       │   ├── battery.ts              # 10-Level ladder state machine & disk sync
 │       │   ├── prng.ts                 # Seeded pseudo-random number generator
 │       │   ├── scoring.ts              # Deterministic 4-axis grading engine
 │       │   ├── simulator.ts            # Batch traffic & microservice state machine
 │       │   └── types.ts                # TypeScript interfaces
-│       └── storage/                    # Storage adapters (Disk JSON / Memory)
+│       └── storage/                    # Storage adapters (Upstash Redis / Disk / Memory)
 │   └── middleware.ts                   # Next.js edge Anti-Cheat & scraper isolation proxy
 ├── .data/                              # Persistent benchmark data (sessions, batteries)
 ├── evaluate.py                         # Automated Python CLI benchmark runner
@@ -406,7 +433,7 @@ blackbox/
 
 For specialized deep-dives, consult the modular documentation in `docs/`:
 
-1. [**Incident Archetypes Deep-Dive**](docs/incident-archetypes.md): Complete failure taxonomy, distractor noise design, and remediation patterns for all 4 archetypes.
+1. [**Incident Archetypes Deep-Dive**](docs/incident-archetypes.md): Complete failure taxonomy, distractor noise design, and remediation patterns for all 10 archetypes.
 2. [**REST API & Tool Specification**](docs/api-reference.md): Detailed request/response JSON schemas, error codes, and budget cost matrices.
 3. [**Scoring & Benchmarking Methodology**](docs/scoring-and-methodology.md): Mathematical derivations of the scoring rubrics, asymmetric risk model, and comparison with SWE-bench.
 4. [**Agent Integration Guide**](docs/agent-integration-guide.md): Code examples for connecting LangChain, AutoGen, CrewAI, and custom LLM agent harnesses.
